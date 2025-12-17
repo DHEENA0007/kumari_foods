@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Save, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useStore } from '@/store';
-import { DAYS, MEAL_TIMES, formatDayName, formatMealTime } from '@/utils';
+import { DAYS, MEAL_TIMES, formatDayName } from '@/utils';
 import type { DayOfWeek, MealTime } from '@/types';
 
 interface WeeklyMealScheduleProps {
