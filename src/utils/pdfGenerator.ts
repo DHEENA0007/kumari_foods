@@ -1,6 +1,5 @@
 import jsPDF from 'jspdf';
-import type { WeeklySchedule } from '@/types';
-import { DAYS, MEAL_TIMES, formatDayName, formatMealTime, getMealValue } from '@/utils';
+import type { MealSchedule, AccountDetails } from '@/types';
 
 // Function to check if text contains Tamil characters
 const containsTamil = (text: string): boolean => {
@@ -87,7 +86,23 @@ const loadImageAsBase64 = (imagePath: string): Promise<string> => {
   });
 };
 
-export const generatePDF = async (companyName: string, schedule: WeeklySchedule | undefined) => {
+// Format month for display
+const formatMonthDisplay = (month: string): string => {
+  const match = month.match(/^([a-z]+)(\d{4})$/i);
+  if (match) {
+    const monthName = match[1].charAt(0).toUpperCase() + match[1].slice(1);
+    const year = match[2];
+    return `${monthName.toUpperCase()} ${year}`;
+  }
+  return month.toUpperCase();
+};
+
+// Generate Monthly Bill PDF
+export const generateMonthlyBillPDF = async (
+  companyName: string,
+  companyDetails: AccountDetails | undefined,
+  monthSchedule: MealSchedule
+) => {
   try {
     const logoBase64 = await loadImageAsBase64('/Logo.png');
     
@@ -95,174 +110,232 @@ export const generatePDF = async (companyName: string, schedule: WeeklySchedule 
       orientation: 'portrait',
       unit: 'mm',
       format: 'a4',
-      compress: true
     });
 
-    // Load Tamil TTF font
     await loadTamilTTFFont(pdf);
 
     const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
-    let yPosition = 15;
+    let yPos = 15;
 
-    // Header with Logo - White background
-    pdf.setFillColor(255, 255, 255); // White background
-    pdf.rect(10, yPosition - 5, pageWidth - 20, 40, 'F');
-    
-    // Add logo above the text
+    const startX = 10;
+    const tableWidth = pageWidth - 20;
+    const labelWidth = 35; // Width for label column (NAME, BANK, etc.)
+    const valueWidth = tableWidth - labelWidth; // Width for value column
+
+    // Draw outer border for entire table
+    pdf.setDrawColor(0, 0, 0);
+    pdf.setLineWidth(0.5);
+
+    // 1. Add centered logo at top
     try {
-      pdf.addImage(logoBase64, 'PNG', pageWidth / 2 - 10, yPosition - 2, 20, 20);
+      const logoSize = 30;
+      pdf.addImage(logoBase64, 'PNG', (pageWidth - logoSize) / 2, yPos, logoSize, logoSize);
+      yPos += logoSize + 3;
     } catch (error) {
       console.log('Logo could not be added');
     }
-    
-    pdf.setTextColor(44, 62, 80);
-    pdf.setFontSize(24);
+
+    // 2. Add centered shop name
+    pdf.setFontSize(16);
     pdf.setFont('helvetica', 'bold');
-    pdf.text('Kumari Foods', pageWidth / 2, yPosition + 22, { align: 'center' });
-    
-    yPosition += 45;
+    pdf.text('KUMARI FOODS', pageWidth / 2, yPos, { align: 'center' });
+    yPos += 10;
 
-  // Company Name Section
-  pdf.setFontSize(14);
-  const companyNameFont = containsTamil(companyName) ? 'notoTamil' : 'helvetica';
-  try {
-    pdf.setFont(companyNameFont, 'normal');
-  } catch (e) {
-    pdf.setFont('helvetica', 'normal');
-  }
-  pdf.setTextColor(44, 62, 80);
-  pdf.text(companyName, 12, yPosition);
-  
-  yPosition += 8;
+    // 3. Add month at top left
+    pdf.setFontSize(10);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text(formatMonthDisplay(monthSchedule.month), startX, yPos);
+    yPos += 8;
 
-  // Table Section - Optimized for mobile
-  const tableWidth = pageWidth - 20;
-  const numColumns = MEAL_TIMES.length + 1;
-  const columnWidth = tableWidth / numColumns;
-  const rowHeight = 9;
-  const headerHeight = 10;
-
-  // Table Header
-  pdf.setFillColor(255, 107, 53);
-  pdf.setTextColor(255, 255, 255);
-  pdf.setFontSize(9);
-  pdf.setFont('helvetica', 'bold');
-
-  // Header background
-  pdf.rect(10, yPosition, tableWidth, headerHeight, 'F');
-  
-  // Draw header text with proper spacing
-  pdf.text('Day', 11, yPosition + 7);
-
-  MEAL_TIMES.forEach((time, index) => {
-    const xPos = 10 + columnWidth * (index + 1) + columnWidth / 2;
-    const mealTimeText = formatMealTime(time);
-    const mealTimeFont = containsTamil(mealTimeText) ? 'notoTamil' : 'helvetica';
-    try {
-      pdf.setFont(mealTimeFont, 'normal');
-    } catch (e) {
+    // Helper to draw a row
+    const drawInfoRow = (label: string, value: string, currentY: number) => {
+      const rowHeight = 8;
+      
+      // Draw cell borders
+      pdf.rect(startX, currentY, labelWidth, rowHeight);
+      pdf.rect(startX + labelWidth, currentY, valueWidth, rowHeight);
+      
+      // Draw text
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(label, startX + 2, currentY + 5.5);
+      
       pdf.setFont('helvetica', 'normal');
-    }
-    pdf.text(mealTimeText, xPos, yPosition + 7, { align: 'center' });
-  });
-
-  yPosition += headerHeight;
-
-  // Table Body - Compact format
-  pdf.setTextColor(44, 62, 80);
-  pdf.setFontSize(8);
-  pdf.setDrawColor(200, 200, 200);
-  pdf.setLineWidth(0.2);
-
-  DAYS.forEach((day, dayIndex) => {
-    // Alternate row colors
-    if (dayIndex % 2 === 0) {
-      pdf.setFillColor(248, 248, 248);
-      pdf.rect(10, yPosition, tableWidth, rowHeight, 'F');
-    }
-
-    // Draw row border
-    pdf.rect(10, yPosition, tableWidth, rowHeight);
-
-    // Draw column separators
-    for (let i = 0; i <= numColumns; i++) {
-      const xPos = 10 + i * columnWidth;
-      pdf.line(xPos, yPosition, xPos, yPosition + rowHeight);
-    }
-
-    // Day column
-    pdf.setTextColor(255, 107, 53);
-    const dayText = formatDayName(day).substring(0, 3);
-    const dayFont = containsTamil(dayText) ? 'notoTamil' : 'helvetica';
-    try {
-      pdf.setFont(dayFont, 'normal');
-    } catch (e) {
-      pdf.setFont('helvetica', 'normal');
-    }
-    pdf.text(dayText, 11, yPosition + 6.5);
-
-    // Meal columns
-    pdf.setTextColor(44, 62, 80);
-    MEAL_TIMES.forEach((time, mealIndex) => {
-      const value = getMealValue(schedule, day, time);
-      const xPos = 10 + columnWidth * (mealIndex + 1) + columnWidth / 2;
-      const cellText = value ? value.substring(0, 8) : '-';
-
-      // Use Tamil font if cell contains Tamil text
-      const cellFont = containsTamil(cellText) ? 'notoTamil' : 'helvetica';
+      const textFont = containsTamil(value) ? 'notoTamil' : 'helvetica';
       try {
-        pdf.setFont(cellFont, 'normal');
+        pdf.setFont(textFont, 'normal');
       } catch (e) {
         pdf.setFont('helvetica', 'normal');
       }
+      pdf.text(value, startX + labelWidth + 2, currentY + 5.5);
+      
+      return currentY + rowHeight;
+    };
 
-      pdf.text(cellText, xPos, yPosition + 6.5, { align: 'center' });
+    // 4. Draw account info rows (part of unified table)
+    yPos = drawInfoRow('NAME:', companyName.toUpperCase(), yPos);
+    yPos = drawInfoRow('BANK:', companyDetails?.bankName || '', yPos);
+    yPos = drawInfoRow('ACCOUNT NO:', companyDetails?.accountNumber || '', yPos);
+    yPos = drawInfoRow('IFSC CODE:', companyDetails?.ifscCode || '', yPos);
+
+    // 5. Continue unified table - meal entries header (no gap)
+    const col1Width = labelWidth; // Date - same width as label column for alignment
+    const col2Width = (tableWidth - col1Width) / 3; // Tiffen, Lunch, Dinner
+
+    pdf.setFillColor(200, 200, 200);
+    pdf.rect(startX, yPos, tableWidth, 7, 'F');
+    pdf.setFontSize(9);
+    pdf.setFont('helvetica', 'bold');
+    
+    // Draw header borders
+    pdf.rect(startX, yPos, col1Width, 7);
+    pdf.rect(startX + col1Width, yPos, col2Width, 7);
+    pdf.rect(startX + col1Width + col2Width, yPos, col2Width, 7);
+    pdf.rect(startX + col1Width + col2Width * 2, yPos, col2Width, 7);
+
+    pdf.text('DATE', startX + col1Width / 2, yPos + 4.5, { align: 'center' });
+    pdf.text('TIFFEN', startX + col1Width + col2Width / 2, yPos + 4.5, { align: 'center' });
+    pdf.text('LUNCH', startX + col1Width + col2Width + col2Width / 2, yPos + 4.5, { align: 'center' });
+    pdf.text('DINNER', startX + col1Width + col2Width * 2 + col2Width / 2, yPos + 4.5, { align: 'center' });
+
+    yPos += 7;
+
+    // Table rows
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(8);
+
+    let tiffenTotal = 0;
+    let lunchTotal = 0;
+    let dinnerTotal = 0;
+
+    monthSchedule.entries.forEach((entry, index) => {
+      const tiffen = entry.tiffen ? parseInt(entry.tiffen.toString()) || 0 : 0;
+      const lunch = entry.lunch ? parseInt(entry.lunch.toString()) || 0 : 0;
+      const dinner = entry.dinner ? parseInt(entry.dinner.toString()) || 0 : 0;
+
+      tiffenTotal += tiffen;
+      lunchTotal += lunch;
+      dinnerTotal += dinner;
+
+      // Zebra striping
+      if (index % 2 === 0) {
+        pdf.setFillColor(248, 248, 248);
+        pdf.rect(startX, yPos, tableWidth, 6, 'F');
+      }
+
+      // Draw cell borders
+      pdf.rect(startX, yPos, col1Width, 6);
+      pdf.rect(startX + col1Width, yPos, col2Width, 6);
+      pdf.rect(startX + col1Width + col2Width, yPos, col2Width, 6);
+      pdf.rect(startX + col1Width + col2Width * 2, yPos, col2Width, 6);
+
+      // Date
+      pdf.text(entry.date, startX + col1Width / 2, yPos + 4, { align: 'center' });
+      
+      // Tiffen
+      pdf.text(entry.tiffen?.toString() || '-', startX + col1Width + col2Width / 2, yPos + 4, { align: 'center' });
+      
+      // Lunch
+      pdf.text(entry.lunch?.toString() || '-', startX + col1Width + col2Width + col2Width / 2, yPos + 4, { align: 'center' });
+      
+      // Dinner
+      pdf.text(entry.dinner?.toString() || '-', startX + col1Width + col2Width * 2 + col2Width / 2, yPos + 4, { align: 'center' });
+
+      yPos += 6;
+
+      // Check for page break
+      if (yPos > 270) {
+        pdf.addPage();
+        yPos = 20;
+        
+        // Repeat header
+        pdf.setFillColor(200, 200, 200);
+        pdf.rect(startX, yPos, tableWidth, 8, 'F');
+        pdf.setFontSize(9);
+        pdf.setFont('helvetica', 'bold');
+        pdf.rect(startX, yPos, col1Width, 8);
+        pdf.rect(startX + col1Width, yPos, col2Width, 7);
+        pdf.rect(startX + col1Width + col2Width, yPos, col2Width, 7);
+        pdf.rect(startX + col1Width + col2Width * 2, yPos, col2Width, 7);
+        pdf.text('DATE', startX + col1Width / 2, yPos + 4.5, { align: 'center' });
+        pdf.text('TIFFEN', startX + col1Width + col2Width / 2, yPos + 4.5, { align: 'center' });
+        pdf.text('LUNCH', startX + col1Width + col2Width + col2Width / 2, yPos + 4.5, { align: 'center' });
+        pdf.text('DINNER', startX + col1Width + col2Width * 2 + col2Width / 2, yPos + 4.5, { align: 'center' });
+        yPos += 7;
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(8);
+      }
     });
 
-    yPosition += rowHeight;
+    // RATE row
+    pdf.setFillColor(210, 210, 210);
+    pdf.rect(startX, yPos, tableWidth, 6, 'F');
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(8);
+    
+    pdf.rect(startX, yPos, col1Width, 6);
+    pdf.rect(startX + col1Width, yPos, col2Width, 6);
+    pdf.rect(startX + col1Width + col2Width, yPos, col2Width, 6);
+    pdf.rect(startX + col1Width + col2Width * 2, yPos, col2Width, 6);
 
-    // Check if we need a new page
-    if (yPosition > pageHeight - 25) {
-      pdf.addPage();
-      yPosition = 15;
-      
-      // Repeat header on new page
-      pdf.setFillColor(255, 107, 53);
-      pdf.setTextColor(255, 255, 255);
-      pdf.setFontSize(9);
-      pdf.setFont('helvetica', 'bold');
-      pdf.rect(10, yPosition, tableWidth, headerHeight, 'F');
-      pdf.text('Day', 11, yPosition + 7);
-      
-      MEAL_TIMES.forEach((time, index) => {
-        const xPos = 10 + columnWidth * (index + 1) + columnWidth / 2;
-        const mealTimeText = formatMealTime(time);
-        const mealTimeFont = containsTamil(mealTimeText) ? 'notoTamil' : 'helvetica';
-        try {
-          pdf.setFont(mealTimeFont, 'normal');
-        } catch (e) {
-          pdf.setFont('helvetica', 'normal');
-        }
-        pdf.text(mealTimeText, xPos, yPosition + 7, { align: 'center' });
-      });
-      
-      yPosition += headerHeight;
-    }
-  });
+    pdf.text('RATE', startX + col1Width / 2, yPos + 4, { align: 'center' });
+    pdf.text((monthSchedule.rates?.tiffen || 0).toString(), startX + col1Width + col2Width / 2, yPos + 4, { align: 'center' });
+    pdf.text((monthSchedule.rates?.lunch || 0).toString(), startX + col1Width + col2Width + col2Width / 2, yPos + 4, { align: 'center' });
+    pdf.text((monthSchedule.rates?.dinner || 0).toString(), startX + col1Width + col2Width * 2 + col2Width / 2, yPos + 4, { align: 'center' });
 
-  // Footer Section
-  yPosition += 10;
-  
-  pdf.setFontSize(8);
-  pdf.setFont('helvetica', 'normal');
-  pdf.text(`Generated on ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`, 15, pageHeight - 10);
-  pdf.text('Kumari Foods - Daily Meal Management System', 15, pageHeight - 5);
+    yPos += 6;
 
-  // Download PDF
-  pdf.save(`${companyName}_Weekly_Schedule.pdf`);
+    // TOTAL row (count x rate format)
+    pdf.setFillColor(220, 220, 220);
+    pdf.rect(startX, yPos, tableWidth, 6, 'F');
+    
+    pdf.rect(startX, yPos, col1Width, 6);
+    pdf.rect(startX + col1Width, yPos, col2Width, 6);
+    pdf.rect(startX + col1Width + col2Width, yPos, col2Width, 6);
+    pdf.rect(startX + col1Width + col2Width * 2, yPos, col2Width, 6);
+
+    pdf.text('TOTAL', startX + col1Width / 2, yPos + 4, { align: 'center' });
+    pdf.text(`${tiffenTotal}x${monthSchedule.rates?.tiffen || 0}`, startX + col1Width + col2Width / 2, yPos + 4, { align: 'center' });
+    pdf.text(`${lunchTotal}x${monthSchedule.rates?.lunch || 0}`, startX + col1Width + col2Width + col2Width / 2, yPos + 4, { align: 'center' });
+    pdf.text(`${dinnerTotal}x${monthSchedule.rates?.dinner || 0}`, startX + col1Width + col2Width * 2 + col2Width / 2, yPos + 4, { align: 'center' });
+
+    yPos += 6;
+
+    // AMOUNT row
+    pdf.setFillColor(230, 230, 230);
+    pdf.rect(startX, yPos, tableWidth, 6, 'F');
+    
+    pdf.rect(startX, yPos, col1Width, 6);
+    pdf.rect(startX + col1Width, yPos, col2Width, 6);
+    pdf.rect(startX + col1Width + col2Width, yPos, col2Width, 6);
+    pdf.rect(startX + col1Width + col2Width * 2, yPos, col2Width, 6);
+
+    const tiffenAmount = tiffenTotal * (monthSchedule.rates?.tiffen || 0);
+    const lunchAmount = lunchTotal * (monthSchedule.rates?.lunch || 0);
+    const dinnerAmount = dinnerTotal * (monthSchedule.rates?.dinner || 0);
+
+    pdf.text('AMOUNT', startX + col1Width / 2, yPos + 4, { align: 'center' });
+    pdf.text(tiffenAmount.toString(), startX + col1Width + col2Width / 2, yPos + 4, { align: 'center' });
+    pdf.text(lunchAmount.toString(), startX + col1Width + col2Width + col2Width / 2, yPos + 4, { align: 'center' });
+    pdf.text(dinnerAmount.toString(), startX + col1Width + col2Width * 2 + col2Width / 2, yPos + 4, { align: 'center' });
+
+    yPos += 6;
+
+    // GRAND TOTAL row - label at left, amount at right
+    pdf.setFillColor(255, 220, 150);
+    pdf.rect(startX, yPos, tableWidth, 7, 'F');
+    pdf.setFontSize(10);
+    
+    pdf.rect(startX, yPos, tableWidth, 7);
+
+    const grandTotal = tiffenAmount + lunchAmount + dinnerAmount;
+    pdf.text('GRAND TOTAL', startX + 5, yPos + 5);
+    pdf.text(grandTotal.toFixed(2), startX + tableWidth - 5, yPos + 5, { align: 'right' });
+
+    // Save PDF
+    pdf.save(`${companyName}_${formatMonthDisplay(monthSchedule.month)}_Bill.pdf`);
   } catch (error) {
-    console.error('Failed to generate PDF:', error);
-    alert('Failed to generate PDF. Please try again.');
+    console.error('Failed to generate bill PDF:', error);
+    alert('Failed to generate bill. Please try again.');
   }
 };

@@ -69,8 +69,8 @@ function App() {
 
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden flex-col lg:flex-row">
-        {/* Sidebar */}
-        <aside className="w-full lg:w-80 lg:flex-shrink-0 border-b lg:border-b-0 lg:border-r border-border-light overflow-y-auto lg:overflow-y-auto">
+        {/* Compact Sidebar */}
+        <aside className="w-full lg:w-64 lg:flex-shrink-0 border-b lg:border-b-0 lg:border-r border-border-light overflow-y-auto lg:overflow-y-auto">
           <CompanyList
             onAddClick={handleAddCompany}
             onEditClick={handleEditCompany}

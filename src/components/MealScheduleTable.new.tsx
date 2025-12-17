@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Plus, X, Calendar as CalendarIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -145,19 +145,13 @@ export function MealScheduleTable({ companyId, month }: MealScheduleTableProps) 
     return entry?.[mealType]?.toString() || '';
   };
 
-  // If no schedule exists, create it automatically using useEffect
-  useEffect(() => {
-    if (!schedule) {
-      addMealSchedule(companyId, {
-        companyId,
-        month,
-        entries: []
-      });
-    }
-  }, [companyId, month, schedule, addMealSchedule]);
-
-  // Show loading state while schedule is being created
+  // If no schedule exists, create it automatically
   if (!schedule) {
+    addMealSchedule(companyId, {
+      companyId,
+      month,
+      entries: []
+    });
     return null;
   }
 

@@ -40,27 +40,10 @@ export interface MealSchedule {
   };
 }
 
-export interface WeeklySchedule {
-  companyId: string;
-  meals: MealEntry[];
-}
-
-export interface WeeklyMealSchedule {
-  companyId: string;
-  weekNumber: number;
-  meals: MealEntry[];
-  rates?: {
-    morning?: number;
-    Afternoon?: number;
-    night?: number;
-  };
-}
-
 export interface AppState {
   companies: Company[];
-  schedules: Record<string, WeeklySchedule>;
-  mealSchedules: Record<string, MealSchedule[]>; // companyId -> array of MealSchedules
-  weeklyMealSchedules: Record<string, WeeklyMealSchedule[]>; // companyId -> array of WeeklyMealSchedules
+  schedules: Record<string, any>; // Legacy, not used anymore
+  mealSchedules: Record<string, MealSchedule[]>; // companyId -> array of MealSchedules (Monthly)
   selectedCompanyId: string | null;
   
   // Actions
@@ -73,9 +56,6 @@ export interface AppState {
   updateMealSchedule: (companyId: string, scheduleMonth: string, entries: DateBasedMealEntry[]) => void;
   updateMealScheduleRates: (companyId: string, scheduleMonth: string, rates: { tiffen?: number; lunch?: number; dinner?: number }) => void;
   getMealSchedule: (companyId: string, month: string) => MealSchedule | undefined;
-  addWeeklyMealSchedule: (companyId: string, weekNumber: number, meals: MealEntry[], rates?: { morning?: number; Afternoon?: number; night?: number }) => void;
-  updateWeeklyMealSchedule: (companyId: string, weekNumber: number, meals: MealEntry[], rates?: { morning?: number; Afternoon?: number; night?: number }) => void;
-  getWeeklyMealSchedule: (companyId: string, weekNumber: number) => WeeklyMealSchedule | undefined;
   loadFromStorage: () => void;
   saveToStorage: () => void;
   syncFromCloud: () => Promise<void>;
