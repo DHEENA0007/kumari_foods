@@ -1,7 +1,13 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { mongoDBService } from '@/services/mongoDBDataAPI';
 import { useStore } from '@/store';
 import { Cloud, Settings, Check, AlertCircle } from 'lucide-react';
@@ -83,15 +89,18 @@ export function MongoDBSettings() {
               <label className="text-sm font-medium text-gray-900 mb-2 block">
                 MongoDB Connection URI
               </label>
-              <Input
-                type="password"
-                placeholder="mongodb+srv://user:password@cluster.mongodb.net/kumari_foods"
-                value={mongoUri}
-                onChange={(e) => setMongoUri(e.target.value)}
-                className="w-full text-xs"
-              />
+              <Select value={mongoUri} onValueChange={setMongoUri}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select MongoDB URI" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="mongodb+srv://kumari:EUttGtfVazqgq23T@cluster0.iyjdmai.mongodb.net/kumari_foods">
+                    Kumari Foods Database
+                  </SelectItem>
+                </SelectContent>
+              </Select>
               <p className="text-xs text-gray-500 mt-2">
-                Format: mongodb+srv://user:password@cluster.mongodb.net/dbname
+                Select your MongoDB connection URI
               </p>
             </div>
 

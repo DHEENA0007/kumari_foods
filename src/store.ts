@@ -67,6 +67,17 @@ export const useStore = create<AppState>((set, get) => ({
     // Delete from IndexedDB
     await storageService.deleteCompany(id);
     await storageService.deleteSchedule(id);
+    
+    // Delete from MongoDB if configured
+    if (mongoDBService.isConfigured()) {
+      try {
+        await mongoDBService.deleteCompany(id);
+        await mongoDBService.deleteSchedule(id);
+      } catch (error) {
+        console.warn('MongoDB delete failed (offline?), data deleted locally:', error);
+      }
+    }
+    
     get().saveToStorage();
   },
 
