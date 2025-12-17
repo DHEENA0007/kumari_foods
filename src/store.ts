@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { AppState, Company, WeeklySchedule, DayOfWeek, MealTime } from './types';
+import type { AppState, Company, WeeklySchedule, DayOfWeek, MealTime, AccountDetails, MealSchedule, DateBasedMealEntry } from './types';
 import { storageService } from '@/services/storageService';
 import { mongoDBService } from '@/services/mongoDBDataAPI';
 
@@ -13,13 +13,15 @@ const createEmptySchedule = (companyId: string): WeeklySchedule => ({
 export const useStore = create<AppState>((set, get) => ({
   companies: [],
   schedules: {},
+  mealSchedules: {},
   selectedCompanyId: null,
 
-  addCompany: async (name: string) => {
+  addCompany: async (name: string, accountDetails?: AccountDetails) => {
     const newCompany: Company = {
       id: crypto.randomUUID(),
       name,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      accountDetails
     };
     
     set((state) => ({
@@ -37,10 +39,10 @@ export const useStore = create<AppState>((set, get) => ({
     get().saveToStorage();
   },
 
-  updateCompany: async (id: string, name: string) => {
+  updateCompany: async (id: string, name: string, accountDetails?: AccountDetails) => {
     set((state) => ({
       companies: state.companies.map((c) =>
-        c.id === id ? { ...c, name } : c
+        c.id === id ? { ...c, name, accountDetails } : c
       )
     }));
     
@@ -121,6 +123,58 @@ export const useStore = create<AppState>((set, get) => ({
     get().saveToStorage();
   },
 
+  addMealSchedule: async (companyId: string, schedule: MealSchedule) => {
+    set((state) => {
+      const existingSchedules = state.mealSchedules[companyId] || [];
+      // Remove if schedule for same month already exists
+      const filtered = existingSchedules.filter(s => s.month !== schedule.month);
+      return {
+        mealSchedules: {
+          ...state.mealSchedules,
+          [companyId]: [...filtered, schedule]
+        }
+      };
+    });
+    get().saveToStorage();
+  },
+
+  updateMealSchedule: async (companyId: string, scheduleMonth: string, entries: DateBasedMealEntry[]) => {
+    set((state) => {
+      const existingSchedules = state.mealSchedules[companyId] || [];
+      const updated = existingSchedules.map(s =>
+        s.month === scheduleMonth ? { ...s, entries } : s
+      );
+      return {
+        mealSchedules: {
+          ...state.mealSchedules,
+          [companyId]: updated
+        }
+      };
+    });
+    get().saveToStorage();
+  },
+
+  updateMealScheduleRates: async (companyId: string, scheduleMonth: string, rates: { tiffen?: number; lunch?: number; dinner?: number }) => {
+    set((state) => {
+      const existingSchedules = state.mealSchedules[companyId] || [];
+      const updated = existingSchedules.map(s =>
+        s.month === scheduleMonth ? { ...s, rates } : s
+      );
+      return {
+        mealSchedules: {
+          ...state.mealSchedules,
+          [companyId]: updated
+        }
+      };
+    });
+    get().saveToStorage();
+  },
+
+  getMealSchedule: (companyId: string, month: string) => {
+    const state = get();
+    return (state.mealSchedules[companyId] || []).find(s => s.month === month);
+  },
+
   loadFromStorage: async () => {
     try {
       const companies = await storageService.getAllCompanies();
@@ -152,6 +206,9 @@ export const useStore = create<AppState>((set, get) => ({
           companyId
         });
       }
+
+      // Save meal schedules to localStorage
+      localStorage.setItem('mealSchedules', JSON.stringify(state.mealSchedules));
 
       // Try to sync to MongoDB if API is configured
       if (mongoDBService.isConfigured()) {

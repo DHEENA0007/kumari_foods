@@ -5,7 +5,7 @@ import { DeleteDialog } from '@/components/DeleteDialog';
 import { WeeklySchedule } from '@/components/WeeklySchedule';
 import { MongoDBSettings } from '@/components/MongoDBSettings';
 import { useStore } from '@/store';
-import type { Company } from '@/types';
+import type { Company, AccountDetails } from '@/types';
 
 function App() {
   const { loadFromStorage, addCompany, updateCompany, deleteCompany } = useStore();
@@ -33,11 +33,11 @@ function App() {
     setDeleteDialogOpen(true);
   };
 
-  const handleSaveCompany = (name: string) => {
+  const handleSaveCompany = (name: string, accountDetails?: AccountDetails) => {
     if (editingCompany) {
-      updateCompany(editingCompany.id, name);
+      updateCompany(editingCompany.id, name, accountDetails);
     } else {
-      addCompany(name);
+      addCompany(name, accountDetails);
     }
   };
 
