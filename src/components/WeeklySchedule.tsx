@@ -10,13 +10,13 @@ import type { DayOfWeek, MealTime } from '@/types';
 
 const mealTimeColors = {
   morning: 'bg-amber-50 border-amber-200 text-amber-700',
-  evening: 'bg-orange-50 border-orange-200 text-orange-700',
+  Afternoon: 'bg-orange-50 border-orange-200 text-orange-700',
   night: 'bg-indigo-50 border-indigo-200 text-indigo-700',
 };
 
 const mealTimeIcons = {
   morning: '☀️',
-  evening: '🌅',
+  Afternoon: '🌅',
   night: '🌙',
 };
 

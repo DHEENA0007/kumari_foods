@@ -1,4 +1,4 @@
-export type MealTime = "morning" | "evening" | "night";
+export type MealTime = "morning" | "Afternoon" | "night";
 export type DayOfWeek = "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday" | "sunday";
 
 export interface Company {

@@ -56,25 +56,25 @@ async function setupMongoDB() {
         companyId: 'company-1',
         meals: [
           { day: 'monday', mealTime: 'morning', foodName: 'Idli with Sambar' },
-          { day: 'monday', mealTime: 'evening', foodName: 'Dosa with Chutney' },
+          { day: 'monday', mealTime: 'Afternoon', foodName: 'Dosa with Chutney' },
           { day: 'monday', mealTime: 'night', foodName: 'Rice with Dal' },
           { day: 'tuesday', mealTime: 'morning', foodName: 'Upma' },
-          { day: 'tuesday', mealTime: 'evening', foodName: 'Uttapam' },
+          { day: 'tuesday', mealTime: 'Afternoon', foodName: 'Uttapam' },
           { day: 'tuesday', mealTime: 'night', foodName: 'Biryani' },
           { day: 'wednesday', mealTime: 'morning', foodName: 'Pongal' },
-          { day: 'wednesday', mealTime: 'evening', foodName: 'Vada' },
+          { day: 'wednesday', mealTime: 'Afternoon', foodName: 'Vada' },
           { day: 'wednesday', mealTime: 'night', foodName: 'Pulao' },
           { day: 'thursday', mealTime: 'morning', foodName: 'Poha' },
-          { day: 'thursday', mealTime: 'evening', foodName: 'Dosa' },
+          { day: 'thursday', mealTime: 'Afternoon', foodName: 'Dosa' },
           { day: 'thursday', mealTime: 'night', foodName: 'Chapati with Curry' },
           { day: 'friday', mealTime: 'morning', foodName: 'Idli' },
-          { day: 'friday', mealTime: 'evening', foodName: 'Samosa' },
+          { day: 'friday', mealTime: 'Afternoon', foodName: 'Samosa' },
           { day: 'friday', mealTime: 'night', foodName: 'Curd Rice' },
           { day: 'saturday', mealTime: 'morning', foodName: 'Paratha' },
-          { day: 'saturday', mealTime: 'evening', foodName: 'Pakora' },
+          { day: 'saturday', mealTime: 'Afternoon', foodName: 'Pakora' },
           { day: 'saturday', mealTime: 'night', foodName: 'Fried Rice' },
           { day: 'sunday', mealTime: 'morning', foodName: 'Puttu' },
-          { day: 'sunday', mealTime: 'evening', foodName: 'Bajji' },
+          { day: 'sunday', mealTime: 'Afternoon', foodName: 'Bajji' },
           { day: 'sunday', mealTime: 'night', foodName: 'Korma' }
         ]
       },
@@ -82,34 +82,34 @@ async function setupMongoDB() {
         companyId: 'company-2',
         meals: [
           { day: 'monday', mealTime: 'morning', foodName: 'Appam with Stew' },
-          { day: 'monday', mealTime: 'evening', foodName: 'Luchi with Curry' },
+          { day: 'monday', mealTime: 'Afternoon', foodName: 'Luchi with Curry' },
           { day: 'tuesday', mealTime: 'morning', foodName: 'Dosa' },
-          { day: 'tuesday', mealTime: 'evening', foodName: 'Chats' },
+          { day: 'tuesday', mealTime: 'Afternoon', foodName: 'Chats' },
           { day: 'wednesday', mealTime: 'morning', foodName: 'Idli' },
-          { day: 'wednesday', mealTime: 'evening', foodName: 'Uttapam' },
+          { day: 'wednesday', mealTime: 'Afternoon', foodName: 'Uttapam' },
           { day: 'thursday', mealTime: 'morning', foodName: 'Poha' },
-          { day: 'thursday', mealTime: 'evening', foodName: 'Vada' },
+          { day: 'thursday', mealTime: 'Afternoon', foodName: 'Vada' },
           { day: 'friday', mealTime: 'morning', foodName: 'Roti' },
-          { day: 'friday', mealTime: 'evening', foodName: 'Samosa' },
+          { day: 'friday', mealTime: 'Afternoon', foodName: 'Samosa' },
           { day: 'saturday', mealTime: 'morning', foodName: 'Paratha' },
-          { day: 'saturday', mealTime: 'evening', foodName: 'Pakora' },
+          { day: 'saturday', mealTime: 'Afternoon', foodName: 'Pakora' },
           { day: 'sunday', mealTime: 'morning', foodName: 'Puttu' },
-          { day: 'sunday', mealTime: 'evening', foodName: 'Bajji' }
+          { day: 'sunday', mealTime: 'Afternoon', foodName: 'Bajji' }
         ]
       },
       {
         companyId: 'company-3',
         meals: [
           { day: 'monday', mealTime: 'morning', foodName: 'Breakfast Combo' },
-          { day: 'monday', mealTime: 'evening', foodName: 'Lunch Combo' },
+          { day: 'monday', mealTime: 'Afternoon', foodName: 'Lunch Combo' },
           { day: 'tuesday', mealTime: 'morning', foodName: 'South Indian' },
-          { day: 'tuesday', mealTime: 'evening', foodName: 'North Indian' },
+          { day: 'tuesday', mealTime: 'Afternoon', foodName: 'North Indian' },
           { day: 'wednesday', mealTime: 'morning', foodName: 'Mixed Breakfast' },
-          { day: 'wednesday', mealTime: 'evening', foodName: 'Special Lunch' },
+          { day: 'wednesday', mealTime: 'Afternoon', foodName: 'Special Lunch' },
           { day: 'thursday', mealTime: 'morning', foodName: 'Light Breakfast' },
-          { day: 'thursday', mealTime: 'evening', foodName: 'Heavy Lunch' },
+          { day: 'thursday', mealTime: 'Afternoon', foodName: 'Heavy Lunch' },
           { day: 'friday', mealTime: 'morning', foodName: 'Quick Bites' },
-          { day: 'friday', mealTime: 'evening', foodName: 'Festive Lunch' }
+          { day: 'friday', mealTime: 'Afternoon', foodName: 'Festive Lunch' }
         ]
       }
     ];

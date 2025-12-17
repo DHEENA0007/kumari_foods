@@ -1,7 +1,7 @@
 import type { DayOfWeek, MealTime, WeeklySchedule } from './types';
 
 export const DAYS: DayOfWeek[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
-export const MEAL_TIMES: MealTime[] = ['morning', 'evening', 'night'];
+export const MEAL_TIMES: MealTime[] = ['morning', 'Afternoon', 'night'];
 
 export const formatDayName = (day: DayOfWeek): string => {
   return day.charAt(0).toUpperCase() + day.slice(1);
