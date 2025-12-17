@@ -24,15 +24,8 @@ const mealTimeIcons = {
   night: '🌙',
 };
 
-type WeeklyMeal = {
-  day: DayOfWeek;
-  mealTime: MealTime;
-  foodName: string;
-};
-
-type WeeklyScheduleData = Record<number, WeeklyMeal[]>; // week number -> meals
-
 export function WeeklyMealSchedule({ companyId }: WeeklyMealScheduleProps) {
+  const { getWeeklyMealSchedule, updateWeeklyMealSchedule } = useStore();
   const [currentWeek, setCurrentWeek] = useState(1);
   const [editingCell, setEditingCell] = useState<string | null>(null);
   const [tempValue, setTempValue] = useState('');
@@ -40,21 +33,13 @@ export function WeeklyMealSchedule({ companyId }: WeeklyMealScheduleProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [editingRate, setEditingRate] = useState<string | null>(null);
   const [tempRate, setTempRate] = useState('');
-  
-  // Load week-specific schedule from localStorage
-  const [weekSchedules, setWeekSchedules] = useState<WeeklyScheduleData>(() => {
-    const stored = localStorage.getItem(`weeklySchedule_${companyId}`);
-    return stored ? JSON.parse(stored) : {};
-  });
-  
-  // Load week-specific rates from localStorage
-  const [rates, setRates] = useState<Record<number, { morning?: number; Afternoon?: number; night?: number }>>(() => {
-    const stored = localStorage.getItem(`weeklyRates_${companyId}`);
-    return stored ? JSON.parse(stored) : { 1: {} };
-  });
 
   const weekKey = `week${currentWeek}`;
-  const currentWeekMeals = weekSchedules[currentWeek] || [];
+  
+  // Get schedule and rates from store
+  const weekSchedule = getWeeklyMealSchedule(companyId, currentWeek);
+  const currentWeekMeals = weekSchedule?.meals || [];
+  const rates = weekSchedule?.rates || {};
 
   const handleCellClick = (day: DayOfWeek, mealTime: MealTime) => {
     const cellId = `${weekKey}-${day}-${mealTime}`;
@@ -78,30 +63,27 @@ export function WeeklyMealSchedule({ companyId }: WeeklyMealScheduleProps) {
       updatedMeals.push({ day, mealTime, foodName: tempValue });
     }
     
-    // Update state and localStorage
-    const newSchedules = { ...weekSchedules, [currentWeek]: updatedMeals };
-    setWeekSchedules(newSchedules);
-    localStorage.setItem(`weeklySchedule_${companyId}`, JSON.stringify(newSchedules));
+    // Update store
+    updateWeeklyMealSchedule(companyId, currentWeek, updatedMeals, rates);
     
     setEditingCell(null);
   };
 
   const handleRateClick = (mealTime: MealTime) => {
     setEditingRate(`${weekKey}-${mealTime}`);
-    setTempRate(rates[currentWeek]?.[mealTime]?.toString() || '');
+    setTempRate(rates?.[mealTime]?.toString() || '');
   };
 
   const handleRateBlur = (mealTime: MealTime) => {
     const rateValue = tempRate ? parseFloat(tempRate) : undefined;
     const newRates = {
       ...rates,
-      [currentWeek]: {
-        ...rates[currentWeek],
-        [mealTime]: rateValue
-      }
+      [mealTime]: rateValue
     };
-    setRates(newRates);
-    localStorage.setItem(`weeklyRates_${companyId}`, JSON.stringify(newRates));
+    
+    // Update store with new rates
+    updateWeeklyMealSchedule(companyId, currentWeek, currentWeekMeals, newRates);
+    
     setEditingRate(null);
     setTempRate('');
   };
@@ -135,9 +117,9 @@ export function WeeklyMealSchedule({ companyId }: WeeklyMealScheduleProps) {
       morningCount,
       AfternoonCount,
       nightCount,
-      morningAmount: morningCount * (rates[currentWeek]?.morning || 0),
-      AfternoonAmount: AfternoonCount * (rates[currentWeek]?.Afternoon || 0),
-      nightAmount: nightCount * (rates[currentWeek]?.night || 0)
+      morningAmount: morningCount * (rates?.morning || 0),
+      AfternoonAmount: AfternoonCount * (rates?.Afternoon || 0),
+      nightAmount: nightCount * (rates?.night || 0)
     };
   };
 
@@ -146,9 +128,7 @@ export function WeeklyMealSchedule({ companyId }: WeeklyMealScheduleProps) {
     try {
       const { saveToStorage } = useStore.getState();
       
-      // Save rates to localStorage
-      localStorage.setItem(`weeklyRates_${companyId}`, JSON.stringify(rates));
-      
+      // Data is already in store via updateWeeklyMealSchedule
       await saveToStorage();
       setIsExpanded(false);
       
@@ -169,9 +149,6 @@ export function WeeklyMealSchedule({ companyId }: WeeklyMealScheduleProps) {
 
   const handleNextWeek = () => {
     setCurrentWeek(currentWeek + 1);
-    if (!rates[currentWeek + 1]) {
-      setRates(prev => ({ ...prev, [currentWeek + 1]: {} }));
-    }
   };
 
   return (
@@ -213,7 +190,7 @@ export function WeeklyMealSchedule({ companyId }: WeeklyMealScheduleProps) {
                 <td className="p-2 text-center border border-border-light">
                   <input
                     type="number"
-                    value={editingRate === `${weekKey}-morning` ? tempRate : rates[currentWeek]?.morning || ''}
+                    value={editingRate === `${weekKey}-morning` ? tempRate : rates?.morning || ''}
                     onChange={(e) => setTempRate(e.target.value)}
                     onFocus={() => handleRateClick('morning')}
                     onBlur={() => handleRateBlur('morning')}
@@ -224,7 +201,7 @@ export function WeeklyMealSchedule({ companyId }: WeeklyMealScheduleProps) {
                 <td className="p-2 text-center border border-border-light">
                   <input
                     type="number"
-                    value={editingRate === `${weekKey}-Afternoon` ? tempRate : rates[currentWeek]?.Afternoon || ''}
+                    value={editingRate === `${weekKey}-Afternoon` ? tempRate : rates?.Afternoon || ''}
                     onChange={(e) => setTempRate(e.target.value)}
                     onFocus={() => handleRateClick('Afternoon')}
                     onBlur={() => handleRateBlur('Afternoon')}
@@ -235,7 +212,7 @@ export function WeeklyMealSchedule({ companyId }: WeeklyMealScheduleProps) {
                 <td className="p-2 text-center border border-border-light">
                   <input
                     type="number"
-                    value={editingRate === `${weekKey}-night` ? tempRate : rates[currentWeek]?.night || ''}
+                    value={editingRate === `${weekKey}-night` ? tempRate : rates?.night || ''}
                     onChange={(e) => setTempRate(e.target.value)}
                     onFocus={() => handleRateClick('night')}
                     onBlur={() => handleRateBlur('night')}
@@ -298,7 +275,7 @@ export function WeeklyMealSchedule({ companyId }: WeeklyMealScheduleProps) {
           <div className="grid grid-cols-4 gap-4 items-center py-2 border-b border-border-light">
             <div className="font-medium text-brand-orange">Morning</div>
             <div className="text-center text-text-primary font-semibold">{calculateTotals().morningCount}</div>
-            <div className="text-center text-text-primary">₹ {rates[currentWeek]?.morning || '0'}</div>
+            <div className="text-center text-text-primary">₹ {rates?.morning || '0'}</div>
             <div className="text-center font-bold text-brand-green">₹ {calculateTotals().morningAmount.toFixed(2)}</div>
           </div>
 
@@ -306,7 +283,7 @@ export function WeeklyMealSchedule({ companyId }: WeeklyMealScheduleProps) {
           <div className="grid grid-cols-4 gap-4 items-center py-2 border-b border-border-light">
             <div className="font-medium text-brand-orange">Afternoon</div>
             <div className="text-center text-text-primary font-semibold">{calculateTotals().AfternoonCount}</div>
-            <div className="text-center text-text-primary">₹ {rates[currentWeek]?.Afternoon || '0'}</div>
+            <div className="text-center text-text-primary">₹ {rates?.Afternoon || '0'}</div>
             <div className="text-center font-bold text-brand-green">₹ {calculateTotals().AfternoonAmount.toFixed(2)}</div>
           </div>
 
@@ -314,7 +291,7 @@ export function WeeklyMealSchedule({ companyId }: WeeklyMealScheduleProps) {
           <div className="grid grid-cols-4 gap-4 items-center py-2 border-b-2 border-border-light pb-2">
             <div className="font-medium text-brand-orange">Night</div>
             <div className="text-center text-text-primary font-semibold">{calculateTotals().nightCount}</div>
-            <div className="text-center text-text-primary">₹ {rates[currentWeek]?.night || '0'}</div>
+            <div className="text-center text-text-primary">₹ {rates?.night || '0'}</div>
             <div className="text-center font-bold text-brand-green">₹ {calculateTotals().nightAmount.toFixed(2)}</div>
           </div>
 

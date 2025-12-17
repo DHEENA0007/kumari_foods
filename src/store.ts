@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { AppState, Company, WeeklySchedule, DayOfWeek, MealTime, AccountDetails, MealSchedule, DateBasedMealEntry } from './types';
+import type { AppState, Company, WeeklySchedule, DayOfWeek, MealTime, AccountDetails, MealSchedule, DateBasedMealEntry, WeeklyMealSchedule, MealEntry } from './types';
 import { storageService } from '@/services/storageService';
 import { mongoDBService } from '@/services/mongoDBDataAPI';
 
@@ -14,6 +14,7 @@ export const useStore = create<AppState>((set, get) => ({
   companies: [],
   schedules: {},
   mealSchedules: {},
+  weeklyMealSchedules: {},
   selectedCompanyId: null,
 
   addCompany: async (name: string, accountDetails?: AccountDetails) => {
@@ -175,15 +176,127 @@ export const useStore = create<AppState>((set, get) => ({
     return (state.mealSchedules[companyId] || []).find(s => s.month === month);
   },
 
+  addWeeklyMealSchedule: (companyId: string, weekNumber: number, meals: MealEntry[], rates?: { morning?: number; Afternoon?: number; night?: number }) => {
+    set((state) => {
+      const companySchedules = state.weeklyMealSchedules[companyId] || [];
+      const existingIndex = companySchedules.findIndex(s => s.weekNumber === weekNumber);
+      
+      const newSchedule: WeeklyMealSchedule = {
+        companyId,
+        weekNumber,
+        meals,
+        rates
+      };
+      
+      if (existingIndex >= 0) {
+        companySchedules[existingIndex] = newSchedule;
+      } else {
+        companySchedules.push(newSchedule);
+      }
+      
+      return {
+        weeklyMealSchedules: {
+          ...state.weeklyMealSchedules,
+          [companyId]: companySchedules
+        }
+      };
+    });
+    get().saveToStorage();
+  },
+
+  updateWeeklyMealSchedule: (companyId: string, weekNumber: number, meals: MealEntry[], rates?: { morning?: number; Afternoon?: number; night?: number }) => {
+    set((state) => {
+      const companySchedules = state.weeklyMealSchedules[companyId] || [];
+      const existingIndex = companySchedules.findIndex(s => s.weekNumber === weekNumber);
+      
+      if (existingIndex >= 0) {
+        companySchedules[existingIndex] = {
+          ...companySchedules[existingIndex],
+          meals,
+          rates
+        };
+      } else {
+        companySchedules.push({
+          companyId,
+          weekNumber,
+          meals,
+          rates
+        });
+      }
+      
+      return {
+        weeklyMealSchedules: {
+          ...state.weeklyMealSchedules,
+          [companyId]: companySchedules
+        }
+      };
+    });
+    get().saveToStorage();
+  },
+
+  getWeeklyMealSchedule: (companyId: string, weekNumber: number) => {
+    const state = get();
+    return (state.weeklyMealSchedules[companyId] || []).find(s => s.weekNumber === weekNumber);
+  },
+
   loadFromStorage: async () => {
     try {
       const companies = await storageService.getAllCompanies();
       const schedules = await storageService.getAllSchedules();
       const selectedId = localStorage.getItem(SELECTED_COMPANY_KEY);
 
+      // Load meal schedules from localStorage
+      const mealSchedulesStr = localStorage.getItem('mealSchedules');
+      const mealSchedules = mealSchedulesStr ? JSON.parse(mealSchedulesStr) : {};
+
+      // Load weekly meal schedules from localStorage
+      const weeklyMealSchedulesStr = localStorage.getItem('weeklyMealSchedules');
+      let weeklyMealSchedules = weeklyMealSchedulesStr ? JSON.parse(weeklyMealSchedulesStr) : {};
+
+      // Migration: Convert old per-company localStorage keys to new centralized format
+      if (companies.length > 0 && Object.keys(weeklyMealSchedules).length === 0) {
+        for (const company of companies) {
+          const oldScheduleStr = localStorage.getItem(`weeklySchedule_${company.id}`);
+          const oldRatesStr = localStorage.getItem(`weeklyRates_${company.id}`);
+          
+          if (oldScheduleStr || oldRatesStr) {
+            const oldSchedules = oldScheduleStr ? JSON.parse(oldScheduleStr) : {};
+            const oldRates = oldRatesStr ? JSON.parse(oldRatesStr) : {};
+            
+            // Convert to new format
+            const companyWeeklySchedules: WeeklyMealSchedule[] = [];
+            const weekNumbers = new Set([...Object.keys(oldSchedules), ...Object.keys(oldRates)].map(Number));
+            
+            weekNumbers.forEach(weekNumber => {
+              companyWeeklySchedules.push({
+                companyId: company.id,
+                weekNumber,
+                meals: oldSchedules[weekNumber] || [],
+                rates: oldRates[weekNumber] || {}
+              });
+            });
+            
+            if (companyWeeklySchedules.length > 0) {
+              weeklyMealSchedules[company.id] = companyWeeklySchedules;
+            }
+            
+            // Clean up old keys
+            localStorage.removeItem(`weeklySchedule_${company.id}`);
+            localStorage.removeItem(`weeklyRates_${company.id}`);
+          }
+        }
+        
+        // Save migrated data
+        if (Object.keys(weeklyMealSchedules).length > 0) {
+          localStorage.setItem('weeklyMealSchedules', JSON.stringify(weeklyMealSchedules));
+        }
+      }
+
       set({
         companies,
         schedules,
+        mealSchedules,
+        weeklyMealSchedules,
         selectedCompanyId: selectedId || null
       });
     } catch (error) {
@@ -209,6 +322,9 @@ export const useStore = create<AppState>((set, get) => ({
 
       // Save meal schedules to localStorage
       localStorage.setItem('mealSchedules', JSON.stringify(state.mealSchedules));
+
+      // Save weekly meal schedules to localStorage
+      localStorage.setItem('weeklyMealSchedules', JSON.stringify(state.weeklyMealSchedules));
 
       // Try to sync to MongoDB if API is configured
       if (mongoDBService.isConfigured()) {
