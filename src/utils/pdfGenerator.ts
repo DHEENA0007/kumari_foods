@@ -89,73 +89,49 @@ const loadImageAsBase64 = (imagePath: string): Promise<string> => {
 // Function to render Tamil text to canvas and convert to base64 image
 const renderTamilTextToImage = (text: string, fontSize: number = 14, bold: boolean = false): Promise<string> => {
   return new Promise((resolve) => {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    
-    if (!ctx) {
-      console.error('Failed to get canvas context');
-      resolve('');
-      return;
-    }
-
-    // Check if font is already available from Google Fonts (loaded in index.html)
-    // Otherwise load from local files
-    const checkFontAvailable = async () => {
-      // First check if Google Fonts version is already loaded
-      if (document.fonts.check('12px "Noto Sans Tamil"')) {
-        console.log('Using Noto Sans Tamil from Google Fonts');
-        return true;
+    // Wait for fonts to be ready (Google Fonts loaded in index.html)
+    document.fonts.ready.then(() => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      if (!ctx) {
+        console.error('Failed to get canvas context');
+        resolve('');
+        return;
       }
+
+      console.log('Rendering Tamil text to canvas');
       
-      // Otherwise load from local files
-      const fontUrl = bold 
-        ? 'url(/Noto_Sans_Tamil/static/NotoSansTamil-Bold.ttf)'
-        : 'url(/Noto_Sans_Tamil/NotoSansTamil-VariableFont_wdth,wght.ttf)';
-      
-      console.log('Loading Tamil font for canvas from:', fontUrl);
-      const font = new FontFace('NotoSansTamilCanvas', fontUrl);
-      
-      const loadedFont = await font.load();
-      console.log('Tamil font loaded successfully for canvas');
-      document.fonts.add(loadedFont);
-      await document.fonts.ready;
-      return false;
-    };
-    
-    checkFontAvailable().then(() => {
-      console.log('Fonts ready, rendering Tamil text to canvas');
-      
-      // Set canvas font with bold weight - prefer Google Fonts, fallback to local
+      // Use Google Fonts directly (loaded in index.html)
       const fontWeight = bold ? '700' : '400';
-      ctx.font = `${fontWeight} ${fontSize}px "Noto Sans Tamil", NotoSansTamilCanvas, sans-serif`;
+      ctx.font = `${fontWeight} ${fontSize}px "Noto Sans Tamil", sans-serif`;
       
       // Measure text
       const metrics = ctx.measureText(text);
       const textWidth = metrics.width;
-      const textHeight = fontSize * 1.8; // Add more padding for better quality
+      const textHeight = fontSize * 1.8;
       
-      console.log(`Text width: ${textWidth}, height: ${textHeight}`);
+      console.log(`Text dimensions: ${textWidth}x${textHeight}`);
       
       // Set canvas size with high DPI for better quality
-      const scale = 3; // Higher scale for better quality
+      const scale = 3;
       canvas.width = (textWidth + 20) * scale;
       canvas.height = textHeight * scale;
       
       // Scale context for high DPI rendering
       ctx.scale(scale, scale);
       
-      // Clear canvas and set font again (needed after resize)
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.font = `${fontWeight} ${fontSize}px "Noto Sans Tamil", NotoSansTamilCanvas, sans-serif`;
+      // Set font again after canvas resize
+      ctx.font = `${fontWeight} ${fontSize}px "Noto Sans Tamil", sans-serif`;
       ctx.fillStyle = '#000000';
       ctx.textBaseline = 'middle';
       ctx.textAlign = 'center';
       
-      // Enable antialiasing for smoother text
+      // Enable antialiasing
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
       
-      // Draw text with slight shadow for better readability
+      // Add subtle shadow for better readability
       ctx.shadowColor = 'rgba(0, 0, 0, 0.1)';
       ctx.shadowBlur = 1;
       ctx.shadowOffsetX = 0.5;
@@ -164,12 +140,12 @@ const renderTamilTextToImage = (text: string, fontSize: number = 14, bold: boole
       // Draw text centered
       ctx.fillText(text, (textWidth + 20) / 2, textHeight / 2);
       
-      // Convert to base64 with high quality
+      // Convert to base64
       const imageData = canvas.toDataURL('image/png', 1.0);
-      console.log('Tamil text rendered to image successfully');
+      console.log('Tamil text rendered successfully');
       resolve(imageData);
     }).catch((error) => {
-      console.error('Failed to load Tamil font for canvas:', error);
+      console.error('Failed to render Tamil text:', error);
       resolve('');
     });
   });
