@@ -18,8 +18,8 @@ const loadTamilTTFFont = async (pdf: jsPDF): Promise<boolean> => {
       fontData = cachedFont;
       console.log('Using cached Tamil font');
     } else {
-      // Load Noto Sans Tamil TTF from local public folder
-      const fontUrl = '/fonts/NotoSansTamil.ttf';
+      // Load Noto Sans Tamil TTF from public folder
+      const fontUrl = '/Noto_Sans_Tamil/NotoSansTamil-VariableFont_wdth,wght.ttf';
       console.log('Loading Tamil font from:', fontUrl);
 
       const response = await fetch(fontUrl);
@@ -52,7 +52,7 @@ const loadTamilTTFFont = async (pdf: jsPDF): Promise<boolean> => {
     // Add font to PDF
     try {
       pdf.addFileToVFS('NotoSansTamil.ttf', fontData);
-      pdf.addFont('NotoSansTamil.ttf', 'notoTamil', 'normal');
+      pdf.addFont('NotoSansTamil.ttf', 'NotoSansTamil', 'normal');
       console.log('Tamil font loaded successfully');
       return true;
     } catch (error) {
@@ -86,6 +86,71 @@ const loadImageAsBase64 = (imagePath: string): Promise<string> => {
   });
 };
 
+// Function to render Tamil text to canvas and convert to base64 image
+const renderTamilTextToImage = (text: string, fontSize: number = 14, bold: boolean = false): Promise<string> => {
+  return new Promise((resolve) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    if (!ctx) {
+      resolve('');
+      return;
+    }
+
+    // Load the Tamil font (use bold variant if requested)
+    const fontUrl = bold 
+      ? 'url(/Noto_Sans_Tamil/static/NotoSansTamil-Bold.ttf)'
+      : 'url(/Noto_Sans_Tamil/NotoSansTamil-VariableFont_wdth,wght.ttf)';
+    const font = new FontFace('NotoSansTamil', fontUrl);
+    
+    font.load().then((loadedFont) => {
+      document.fonts.add(loadedFont);
+      
+      // Set canvas font with bold weight
+      const fontWeight = bold ? 'bold' : 'normal';
+      ctx.font = `${fontWeight} ${fontSize}px NotoSansTamil`;
+      
+      // Measure text
+      const metrics = ctx.measureText(text);
+      const textWidth = metrics.width;
+      const textHeight = fontSize * 1.8; // Add more padding for better quality
+      
+      // Set canvas size with high DPI for better quality
+      const scale = 3; // Higher scale for better quality
+      canvas.width = (textWidth + 20) * scale;
+      canvas.height = textHeight * scale;
+      
+      // Scale context for high DPI rendering
+      ctx.scale(scale, scale);
+      
+      // Clear canvas and set font again (needed after resize)
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.font = `${fontWeight} ${fontSize}px NotoSansTamil`;
+      ctx.fillStyle = '#000000';
+      ctx.textBaseline = 'middle';
+      ctx.textAlign = 'center';
+      
+      // Enable antialiasing for smoother text
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      
+      // Draw text with slight shadow for better readability
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.1)';
+      ctx.shadowBlur = 1;
+      ctx.shadowOffsetX = 0.5;
+      ctx.shadowOffsetY = 0.5;
+      
+      // Draw text centered
+      ctx.fillText(text, (textWidth + 20) / 2, textHeight / 2);
+      
+      // Convert to base64 with high quality
+      resolve(canvas.toDataURL('image/png', 1.0));
+    }).catch(() => {
+      resolve('');
+    });
+  });
+};
+
 // Format month for display
 const formatMonthDisplay = (month: string): string => {
   const match = month.match(/^([a-z]+)(\d{4})$/i);
@@ -105,6 +170,7 @@ export const generateMonthlyBillPDF = async (
 ) => {
   try {
     const logoBase64 = await loadImageAsBase64('/Logo.png');
+    const tamilTextImage = await renderTamilTextToImage('குமரி புட்ஸ்', 48, true);
     
     const pdf = new jsPDF({
       orientation: 'portrait',
@@ -135,11 +201,19 @@ export const generateMonthlyBillPDF = async (
       console.log('Logo could not be added');
     }
 
-    // 2. Add centered shop name
-    pdf.setFontSize(12);
-    pdf.setFont('helvetica', 'bold');
-    pdf.text('KUMARI FOODS', pageWidth / 2, yPos, { align: 'center' });
-    yPos += 6;
+    // 2. Add centered shop name in Tamil as image
+    if (tamilTextImage) {
+      const textImgWidth = 70; // Larger width for better visibility
+      const textImgHeight = 12; // Larger height for better quality
+      pdf.addImage(tamilTextImage, 'PNG', (pageWidth - textImgWidth) / 2, yPos - 1, textImgWidth, textImgHeight);
+      yPos += textImgHeight + 1;
+    } else {
+      // Fallback if image rendering fails
+      pdf.setFontSize(14);
+      pdf.setFont('NotoSansTamil', 'normal');
+      pdf.text('குமரி ஃபுட்ஸ்', pageWidth / 2, yPos, { align: 'center' });
+      yPos += 6;
+    }
 
     // 3. Add month at top left
     pdf.setFontSize(8);
@@ -161,7 +235,7 @@ export const generateMonthlyBillPDF = async (
       pdf.text(label, startX + 2, currentY + 3.5);
 
       pdf.setFont('helvetica', 'normal');
-      const textFont = containsTamil(value) ? 'notoTamil' : 'helvetica';
+      const textFont = containsTamil(value) ? 'NotoSansTamil' : 'helvetica';
       try {
         pdf.setFont(textFont, 'normal');
       } catch (e) {

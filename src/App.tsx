@@ -66,9 +66,7 @@ function App() {
               </button>
 
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
-                  <img src="/Logo.png" alt="Kumari Foods Logo" className="w-6 h-6" />
-                </div>
+                <img src="/Logo.png" alt="Kumari Foods Logo" className="w-12 h-12" />
                 <div>
                   <h1 className="text-xl font-bold text-slate-800">Kumari Foods</h1>
                   <p className="text-xs text-slate-500 hidden sm:block">Daily Meal Management System</p>
