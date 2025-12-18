@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { CompanyList } from '@/components/CompanyList';
+import { Menu, X } from 'lucide-react';
+import { Sidebar } from '@/components/Sidebar';
 import { CompanyDialog } from '@/components/CompanyDialog';
 import { DeleteDialog } from '@/components/DeleteDialog';
 import { WeeklySchedule } from '@/components/WeeklySchedule';
-import { MongoDBSettings } from '@/components/MongoDBSettings';
+
 import { useStore } from '@/store';
 import type { Company, AccountDetails } from '@/types';
 
@@ -13,6 +14,7 @@ function App() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
   const [deletingCompany, setDeletingCompany] = useState<Company | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     loadFromStorage();
@@ -50,39 +52,86 @@ function App() {
   };
 
   return (
-    <div className="h-screen flex flex-col">
+    <div className="h-screen flex flex-col bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 overflow-hidden">
       {/* Header */}
-      <header className="bg-bg-surface border-b border-border-light shadow-sm">
-        <div className="px-3 sm:px-6 py-3 sm:py-4 flex items-center gap-2 sm:gap-3 justify-between">
-          <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-            <img src="/Logo.png" alt="Kumari Foods Logo" className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg" />
-            <div className="flex-1 min-w-0">
-              <h1 className="text-lg sm:text-xl font-bold text-text-primary truncate">Kumari Foods</h1>
-              <p className="text-xs text-text-secondary hidden sm:block">Daily Meal Management System</p>
+      <header className="bg-white/95 backdrop-blur-sm border-b border-slate-200/60 shadow-sm flex-shrink-0">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="lg:hidden p-2 rounded-lg bg-slate-100 hover:bg-slate-200 transition-all duration-200 shadow-sm"
+              >
+                {sidebarOpen ? <X className="w-5 h-5 text-slate-600" /> : <Menu className="w-5 h-5 text-slate-600" />}
+              </button>
+
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <img src="/Logo.png" alt="Kumari Foods Logo" className="w-6 h-6" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold text-slate-800">Kumari Foods</h1>
+                  <p className="text-xs text-slate-500 hidden sm:block">Daily Meal Management System</p>
+                </div>
+              </div>
             </div>
-          </div>
-          <div className="flex-shrink-0">
-            <MongoDBSettings />
+
+            <div className="flex items-center gap-4">
+              {/* Cloud button removed as unnecessary */}
+            </div>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <div className="flex-1 flex overflow-hidden flex-col lg:flex-row">
-        {/* Compact Sidebar */}
-        <aside className="w-full lg:w-64 lg:flex-shrink-0 border-b lg:border-b-0 lg:border-r border-border-light overflow-y-auto lg:overflow-y-auto">
-          <CompanyList
-            onAddClick={handleAddCompany}
-            onEditClick={handleEditCompany}
-            onDeleteClick={handleDeleteCompany}
-          />
+      <div className="flex flex-1 overflow-hidden">
+        {/* Sidebar */}
+        <aside className={`fixed lg:static inset-y-0 left-0 z-40 w-80 bg-white/95 backdrop-blur-sm border-r border-slate-200/60 shadow-xl lg:shadow-none transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 ${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+        }`}>
+          <div className="h-full overflow-hidden">
+            <Sidebar
+              onAddClick={handleAddCompany}
+              onEditClick={handleEditCompany}
+              onDeleteClick={handleDeleteCompany}
+            />
+          </div>
         </aside>
 
+        {/* Overlay for mobile */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-30 lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
         {/* Main Area */}
-        <main className="flex-1 overflow-hidden bg-bg-primary">
-          <WeeklySchedule />
+        <main className="flex-1 min-w-0 overflow-hidden">
+          <div className="h-full overflow-y-auto p-3 sm:p-6 lg:p-8">
+            <div className="max-w-7xl mx-auto">
+              <div className="mb-4 sm:mb-6">
+                <h2 className="text-lg sm:text-2xl font-bold text-slate-800 mb-2">Meal Schedule Dashboard</h2>
+                <p className="text-sm sm:text-base text-slate-600">Manage and track meal schedules for all companies</p>
+              </div>
+
+              <div className="bg-white/60 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-sm border border-slate-200/60 p-3 sm:p-6">
+                <WeeklySchedule />
+              </div>
+            </div>
+          </div>
         </main>
       </div>
+
+      {/* Footer */}
+      <footer className="bg-white/80 backdrop-blur-sm border-t border-slate-200/60 flex-shrink-0">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between text-sm text-slate-500">
+            <p>&copy; 2024 Kumari Foods. All rights reserved.</p>
+            <p>Daily Meal Management System v1.0</p>
+          </div>
+        </div>
+      </footer>
 
       {/* Dialogs */}
       <CompanyDialog

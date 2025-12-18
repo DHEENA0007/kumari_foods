@@ -1,6 +1,4 @@
 import { useState, useEffect } from 'react';
-import { Plus, X, Calendar as CalendarIcon } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useStore } from '@/store';
 import type { DateBasedMealEntry } from '@/types';
@@ -9,12 +7,6 @@ interface MealScheduleTableProps {
   companyId: string;
   month: string;
 }
-
-// Convert YYYY-MM-DD to DD-MM-YYYY
-const formatDateToDDMMYYYY = (isoDate: string): string => {
-  const [year, month, day] = isoDate.split('-');
-  return `${day}-${month}-${year}`;
-};
 
 // Format month for display
 const formatMonthDisplay = (month: string): string => {
@@ -27,12 +19,38 @@ const formatMonthDisplay = (month: string): string => {
   return month;
 };
 
+// Generate all dates for a given month
+const generateMonthDates = (month: string): string[] => {
+  const match = month.match(/^([a-z]+)(\d{4})$/i);
+  if (!match) return [];
+
+  const monthName = match[1].toLowerCase();
+  const year = parseInt(match[2]);
+
+  const monthMap: { [key: string]: number } = {
+    january: 0, february: 1, march: 2, april: 3, may: 4, june: 5,
+    july: 6, august: 7, september: 8, october: 9, november: 10, december: 11
+  };
+
+  const monthIndex = monthMap[monthName];
+  if (monthIndex === undefined) return [];
+
+  const lastDay = new Date(year, monthIndex + 1, 0);
+  const dates: string[] = [];
+
+  for (let day = 1; day <= lastDay.getDate(); day++) {
+    const dd = String(day).padStart(2, '0');
+    const mm = String(monthIndex + 1).padStart(2, '0');
+    dates.push(`${dd}-${mm}-${year}`);
+  }
+
+  return dates;
+};
+
 export function MealScheduleTable({ companyId, month }: MealScheduleTableProps) {
   const { getMealSchedule, addMealSchedule, updateMealSchedule, updateMealScheduleRates } = useStore();
   const [editingCell, setEditingCell] = useState<string | null>(null);
   const [tempValue, setTempValue] = useState('');
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [selectedDate, setSelectedDate] = useState('');
   const [editingRate, setEditingRate] = useState<string | null>(null);
   const [tempRate, setTempRate] = useState('');
 
@@ -112,30 +130,9 @@ export function MealScheduleTable({ companyId, month }: MealScheduleTableProps) 
     setEditingCell(null);
   };
 
-  const handleAddDate = () => {
-    setShowDatePicker(true);
-  };
 
-  const handleDateSelected = (isoDate: string) => {
-    if (!schedule) return;
-    if (isoDate && isoDate.trim()) {
-      const ddmmyyyyDate = formatDateToDDMMYYYY(isoDate);
-      const newEntry: DateBasedMealEntry = { date: ddmmyyyyDate };
-      const updated = [...schedule.entries, newEntry];
-      updateMealSchedule(companyId, month, updated);
-      setShowDatePicker(false);
-      setSelectedDate('');
-    }
-  };
 
-  const handleDeleteDate = (date: string) => {
-    if (!schedule) return;
-    const updated = schedule.entries.filter(e => e.date !== date);
-    updateMealSchedule(companyId, month, updated);
-  };
-
-  const sampleDates = schedule?.entries.map(e => e.date) || [];
-
+  const allDates = generateMonthDates(month);
   const isEditing = (date: string, mealType: string) => {
     return editingCell === `${date}-${mealType}`;
   };
@@ -156,6 +153,20 @@ export function MealScheduleTable({ companyId, month }: MealScheduleTableProps) 
     }
   }, [companyId, month, schedule, addMealSchedule]);
 
+  // Auto-populate entries for all dates in the month
+  useEffect(() => {
+    if (schedule && allDates.length > 0) {
+      const existingDates = new Set(schedule.entries.map(e => e.date));
+      const missingDates = allDates.filter(date => !existingDates.has(date));
+
+      if (missingDates.length > 0) {
+        const newEntries = missingDates.map(date => ({ date }));
+        const updatedEntries = [...schedule.entries, ...newEntries];
+        updateMealSchedule(companyId, month, updatedEntries);
+      }
+    }
+  }, [schedule, allDates, companyId, month, updateMealSchedule]);
+
   // Show loading state while schedule is being created
   if (!schedule) {
     return null;
@@ -165,14 +176,14 @@ export function MealScheduleTable({ companyId, month }: MealScheduleTableProps) 
   const grandTotal = totals.tiffenAmount + totals.lunchAmount + totals.dinnerAmount;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4">
       {/* Rates Configuration Card */}
-      <Card className="p-4 bg-gradient-to-br from-brand-orange/5 to-brand-amber/5 border-brand-orange/20">
+      <Card className="p-3 sm:p-4 bg-gradient-to-br from-brand-orange/5 to-brand-amber/5 border-brand-orange/20">
         <h3 className="text-sm font-semibold text-text-primary mb-3 flex items-center gap-2">
           <span className="w-1 h-4 bg-brand-orange rounded-full"></span>
           Meal Rates (₹)
         </h3>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {['tiffen', 'lunch', 'dinner'].map((mealType) => (
             <div key={mealType} className="bg-white rounded-md p-2 border border-border-light">
               <label className="text-xs font-medium text-text-secondary block mb-1 capitalize">
@@ -192,131 +203,71 @@ export function MealScheduleTable({ companyId, month }: MealScheduleTableProps) 
         </div>
       </Card>
 
-      {/* Add Date Button */}
+      {/* Daily Entries Header */}
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-text-primary flex items-center gap-2">
           <span className="w-1 h-4 bg-brand-orange rounded-full"></span>
           Daily Entries
         </h3>
-        {!showDatePicker && (
-          <Button 
-            onClick={handleAddDate}
-            size="sm"
-            className="bg-brand-orange hover:bg-brand-orange/90"
-          >
-            <Plus className="w-3 h-3 mr-1" />
-            Add Date
-          </Button>
-        )}
       </div>
 
-      {/* Date Picker */}
-      {showDatePicker && (
-        <Card className="p-3 bg-blue-50 border-blue-200">
-          <div className="flex items-center gap-2">
-            <CalendarIcon className="w-4 h-4 text-blue-600 flex-shrink-0" />
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              autoFocus
-              className="flex-1 px-3 py-1.5 border border-blue-300 rounded bg-white text-text-primary text-sm focus:outline-none focus:border-blue-500 transition-colors"
-            />
-            <Button
-              onClick={() => handleDateSelected(selectedDate)}
-              disabled={!selectedDate}
-              size="sm"
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              Add
-            </Button>
-            <Button
-              onClick={() => {
-                setShowDatePicker(false);
-                setSelectedDate('');
-              }}
-              size="sm"
-              variant="outline"
-            >
-              Cancel
-            </Button>
-          </div>
-        </Card>
-      )}
-
       {/* Entries Table */}
-      {sampleDates.length === 0 ? (
-        <Card className="p-8 text-center border-2 border-dashed border-border-light">
-          <CalendarIcon className="w-12 h-12 mx-auto text-text-secondary mb-3 opacity-50" />
-          <p className="text-base font-medium text-text-secondary mb-1">No entries yet</p>
-          <p className="text-sm text-text-secondary">Add your first date to start tracking meals</p>
-        </Card>
-      ) : (
-        <Card className="overflow-hidden border-border-light shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-gradient-to-r from-brand-orange to-brand-amber text-white">
-                  <th className="px-3 py-2 text-left font-semibold">Date</th>
-                  <th className="px-3 py-2 text-center font-semibold">Tiffen</th>
-                  <th className="px-3 py-2 text-center font-semibold">Lunch</th>
-                  <th className="px-3 py-2 text-center font-semibold">Dinner</th>
-                  <th className="px-3 py-2 text-center font-semibold w-12"></th>
+      <Card className="overflow-hidden border-border-light shadow-lg">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-gradient-to-r from-slate-800 to-slate-700 text-white shadow-sm">
+                <th className="px-4 py-3 text-left font-bold text-sm">Date</th>
+                <th className="px-4 py-3 text-center font-bold text-sm">Tiffen</th>
+                <th className="px-4 py-3 text-center font-bold text-sm">Lunch</th>
+                <th className="px-4 py-3 text-center font-bold text-sm">Dinner</th>
+              </tr>
+            </thead>
+            <tbody>
+              {allDates.map((date, index) => (
+                <tr
+                  key={date}
+                  className={`border-b border-slate-200 transition-all duration-200 hover:bg-blue-50 hover:shadow-sm ${
+                    index % 2 === 0 ? 'bg-white' : 'bg-slate-50'
+                  }`}
+                >
+                  <td className="px-4 py-3">
+                    <div className="font-mono font-bold text-slate-800 text-sm bg-slate-100 px-2 py-1 rounded border border-slate-200 inline-block">
+                      {date}
+                    </div>
+                  </td>
+                  {['tiffen', 'lunch', 'dinner'].map((mealType) => (
+                    <td key={mealType} className="px-4 py-3 text-center">
+                      <input
+                        type="text"
+                        value={isEditing(date, mealType) ? tempValue : getValue(date, mealType as 'tiffen' | 'lunch' | 'dinner')}
+                        onChange={(e) => setTempValue(e.target.value)}
+                        onFocus={() => handleCellClick(date, mealType as 'tiffen' | 'lunch' | 'dinner')}
+                        onBlur={() => handleCellBlur(date, mealType as 'tiffen' | 'lunch' | 'dinner')}
+                        placeholder="-"
+                        className="w-20 text-center px-3 py-2 border border-slate-300 rounded-md bg-white text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:border-slate-400"
+                      />
+                    </td>
+                  ))}
                 </tr>
-              </thead>
-              <tbody>
-                {sampleDates.map((date, idx) => (
-                  <tr 
-                    key={date} 
-                    className={`border-b border-border-light transition-colors hover:bg-brand-orange/5 ${
-                      idx % 2 === 0 ? 'bg-white' : 'bg-bg-surface'
-                    }`}
-                  >
-                    <td className="px-3 py-2">
-                      <div className="font-mono font-semibold text-text-primary text-sm">{date}</div>
-                    </td>
-                    {['tiffen', 'lunch', 'dinner'].map((mealType) => (
-                      <td key={mealType} className="px-2 py-1 text-center">
-                        <input
-                          type="text"
-                          value={isEditing(date, mealType) ? tempValue : getValue(date, mealType as 'tiffen' | 'lunch' | 'dinner')}
-                          onChange={(e) => setTempValue(e.target.value)}
-                          onFocus={() => handleCellClick(date, mealType as 'tiffen' | 'lunch' | 'dinner')}
-                          onBlur={() => handleCellBlur(date, mealType as 'tiffen' | 'lunch' | 'dinner')}
-                          placeholder="-"
-                          className="w-16 text-center px-2 py-1 border border-transparent rounded bg-transparent text-text-primary font-medium focus:outline-none focus:border-brand-orange focus:bg-white transition-all"
-                        />
-                      </td>
-                    ))}
-                    <td className="px-2 py-1 text-center">
-                      <button
-                        onClick={() => handleDeleteDate(date)}
-                        className="p-1 rounded hover:bg-red-100 text-red-500 hover:text-red-700 transition-colors"
-                        title="Delete"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card>
-      )}
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Card>
 
       {/* Summary Card */}
-      {sampleDates.length > 0 && (
-        <Card className="p-4 bg-gradient-to-br from-green-50 to-blue-50 border border-brand-orange/20">
+      {allDates.length > 0 && (
+        <Card className="p-3 sm:p-4 bg-gradient-to-br from-green-50 to-blue-50 border border-brand-orange/20">
           <h3 className="text-sm font-semibold text-text-primary mb-3 flex items-center gap-2">
             <span className="w-1 h-4 bg-brand-orange rounded-full"></span>
             Summary - {formatMonthDisplay(month)}
           </h3>
-          
+
           <div className="space-y-3">
             {/* Summary Table */}
-            <div className="bg-white rounded-md p-3 text-sm">
-              <div className="grid grid-cols-4 gap-3 font-semibold text-text-secondary mb-2 pb-2 border-b border-border-light">
+            <div className="bg-white rounded-md p-2 sm:p-3 text-xs sm:text-sm">
+              <div className="grid grid-cols-4 gap-2 sm:gap-3 font-semibold text-text-secondary mb-2 pb-2 border-b border-border-light">
                 <div>Meal</div>
                 <div className="text-center">Count</div>
                 <div className="text-center">Rate</div>
@@ -328,25 +279,25 @@ export function MealScheduleTable({ companyId, month }: MealScheduleTableProps) 
                 { type: 'Lunch', count: totals.lunchCount, rate: schedule?.rates?.lunch || 0, amount: totals.lunchAmount },
                 { type: 'Dinner', count: totals.dinnerCount, rate: schedule?.rates?.dinner || 0, amount: totals.dinnerAmount }
               ].map((item) => (
-                <div key={item.type} className="grid grid-cols-4 gap-3 py-2 border-b border-border-light items-center last:border-0">
-                  <div className="font-medium text-brand-orange">{item.type}</div>
-                  <div className="text-center font-semibold text-text-primary">{item.count}</div>
-                  <div className="text-center text-text-secondary">₹{item.rate}</div>
-                  <div className="text-center font-bold text-green-600">₹{item.amount.toFixed(2)}</div>
+                <div key={item.type} className="grid grid-cols-4 gap-2 sm:gap-3 py-2 border-b border-border-light items-center last:border-0">
+                  <div className="font-medium text-brand-orange text-xs sm:text-sm">{item.type}</div>
+                  <div className="text-center font-semibold text-text-primary text-xs sm:text-sm">{item.count}</div>
+                  <div className="text-center text-text-secondary text-xs sm:text-sm">₹{item.rate}</div>
+                  <div className="text-center font-bold text-green-600 text-xs sm:text-sm">₹{item.amount.toFixed(2)}</div>
                 </div>
               ))}
             </div>
 
             {/* Grand Total */}
-            <div className="bg-gradient-to-r from-brand-orange to-brand-amber rounded-md p-3 text-white">
+            <div className="bg-gradient-to-r from-brand-orange to-brand-amber rounded-md p-2 sm:p-3 text-white">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs opacity-90">Grand Total</p>
-                  <p className="text-2xl font-bold">₹{grandTotal.toFixed(2)}</p>
+                  <p className="text-lg sm:text-2xl font-bold">₹{grandTotal.toFixed(2)}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-xs opacity-90">Total Meals</p>
-                  <p className="text-xl font-bold">
+                  <p className="text-lg sm:text-xl font-bold">
                     {totals.tiffenCount + totals.lunchCount + totals.dinnerCount}
                   </p>
                 </div>

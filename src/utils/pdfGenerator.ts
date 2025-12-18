@@ -128,38 +128,38 @@ export const generateMonthlyBillPDF = async (
 
     // 1. Add centered logo at top
     try {
-      const logoSize = 30;
+      const logoSize = 15;
       pdf.addImage(logoBase64, 'PNG', (pageWidth - logoSize) / 2, yPos, logoSize, logoSize);
-      yPos += logoSize + 3;
+      yPos += logoSize + 2;
     } catch (error) {
       console.log('Logo could not be added');
     }
 
     // 2. Add centered shop name
-    pdf.setFontSize(16);
+    pdf.setFontSize(12);
     pdf.setFont('helvetica', 'bold');
     pdf.text('KUMARI FOODS', pageWidth / 2, yPos, { align: 'center' });
-    yPos += 10;
+    yPos += 6;
 
     // 3. Add month at top left
-    pdf.setFontSize(10);
+    pdf.setFontSize(8);
     pdf.setFont('helvetica', 'bold');
     pdf.text(formatMonthDisplay(monthSchedule.month), startX, yPos);
-    yPos += 8;
+    yPos += 5;
 
     // Helper to draw a row
     const drawInfoRow = (label: string, value: string, currentY: number) => {
-      const rowHeight = 8;
-      
+      const rowHeight = 5;
+
       // Draw cell borders
       pdf.rect(startX, currentY, labelWidth, rowHeight);
       pdf.rect(startX + labelWidth, currentY, valueWidth, rowHeight);
-      
+
       // Draw text
-      pdf.setFontSize(9);
+      pdf.setFontSize(7);
       pdf.setFont('helvetica', 'bold');
-      pdf.text(label, startX + 2, currentY + 5.5);
-      
+      pdf.text(label, startX + 2, currentY + 3.5);
+
       pdf.setFont('helvetica', 'normal');
       const textFont = containsTamil(value) ? 'notoTamil' : 'helvetica';
       try {
@@ -167,8 +167,8 @@ export const generateMonthlyBillPDF = async (
       } catch (e) {
         pdf.setFont('helvetica', 'normal');
       }
-      pdf.text(value, startX + labelWidth + 2, currentY + 5.5);
-      
+      pdf.text(value, startX + labelWidth + 2, currentY + 3.5);
+
       return currentY + rowHeight;
     };
 
@@ -183,22 +183,22 @@ export const generateMonthlyBillPDF = async (
     const col2Width = (tableWidth - col1Width) / 3; // Tiffen, Lunch, Dinner
 
     pdf.setFillColor(200, 200, 200);
-    pdf.rect(startX, yPos, tableWidth, 7, 'F');
-    pdf.setFontSize(9);
+    pdf.rect(startX, yPos, tableWidth, 5, 'F');
+    pdf.setFontSize(7);
     pdf.setFont('helvetica', 'bold');
-    
+
     // Draw header borders
-    pdf.rect(startX, yPos, col1Width, 7);
-    pdf.rect(startX + col1Width, yPos, col2Width, 7);
-    pdf.rect(startX + col1Width + col2Width, yPos, col2Width, 7);
-    pdf.rect(startX + col1Width + col2Width * 2, yPos, col2Width, 7);
+    pdf.rect(startX, yPos, col1Width, 5);
+    pdf.rect(startX + col1Width, yPos, col2Width, 5);
+    pdf.rect(startX + col1Width + col2Width, yPos, col2Width, 5);
+    pdf.rect(startX + col1Width + col2Width * 2, yPos, col2Width, 5);
 
-    pdf.text('DATE', startX + col1Width / 2, yPos + 4.5, { align: 'center' });
-    pdf.text('TIFFEN', startX + col1Width + col2Width / 2, yPos + 4.5, { align: 'center' });
-    pdf.text('LUNCH', startX + col1Width + col2Width + col2Width / 2, yPos + 4.5, { align: 'center' });
-    pdf.text('DINNER', startX + col1Width + col2Width * 2 + col2Width / 2, yPos + 4.5, { align: 'center' });
+    pdf.text('DATE', startX + col1Width / 2, yPos + 3, { align: 'center' });
+    pdf.text('TIFFEN', startX + col1Width + col2Width / 2, yPos + 3, { align: 'center' });
+    pdf.text('LUNCH', startX + col1Width + col2Width + col2Width / 2, yPos + 3, { align: 'center' });
+    pdf.text('DINNER', startX + col1Width + col2Width * 2 + col2Width / 2, yPos + 3, { align: 'center' });
 
-    yPos += 7;
+    yPos += 5;
 
     // Table rows
     pdf.setFont('helvetica', 'normal');
@@ -208,7 +208,24 @@ export const generateMonthlyBillPDF = async (
     let lunchTotal = 0;
     let dinnerTotal = 0;
 
-    monthSchedule.entries.forEach((entry, index) => {
+    // Filter entries to only include those for the selected month
+    const monthNames = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
+    const monthIndex = monthNames.findIndex(name => monthSchedule.month.toLowerCase().replace(/\s/g, '').startsWith(name));
+
+    let selectedMonthEntries = monthSchedule.entries;
+    if (monthIndex >= 0) {
+      const targetMonth = (monthIndex + 1).toString().padStart(2, '0');
+      const targetYear = monthSchedule.month.match(/(\d{4})$/)?.[1];
+
+      if (targetYear) {
+        selectedMonthEntries = monthSchedule.entries.filter(entry => {
+          const [, month, year] = entry.date.split('-');
+          return month === targetMonth && year === targetYear;
+        });
+      }
+    }
+
+    selectedMonthEntries.forEach((entry, index) => {
       const tiffen = entry.tiffen ? parseInt(entry.tiffen.toString()) || 0 : 0;
       const lunch = entry.lunch ? parseInt(entry.lunch.toString()) || 0 : 0;
       const dinner = entry.dinner ? parseInt(entry.dinner.toString()) || 0 : 0;
@@ -243,94 +260,73 @@ export const generateMonthlyBillPDF = async (
 
       yPos += 6;
 
-      // Check for page break
-      if (yPos > 270) {
-        pdf.addPage();
-        yPos = 20;
-        
-        // Repeat header
-        pdf.setFillColor(200, 200, 200);
-        pdf.rect(startX, yPos, tableWidth, 8, 'F');
-        pdf.setFontSize(9);
-        pdf.setFont('helvetica', 'bold');
-        pdf.rect(startX, yPos, col1Width, 8);
-        pdf.rect(startX + col1Width, yPos, col2Width, 7);
-        pdf.rect(startX + col1Width + col2Width, yPos, col2Width, 7);
-        pdf.rect(startX + col1Width + col2Width * 2, yPos, col2Width, 7);
-        pdf.text('DATE', startX + col1Width / 2, yPos + 4.5, { align: 'center' });
-        pdf.text('TIFFEN', startX + col1Width + col2Width / 2, yPos + 4.5, { align: 'center' });
-        pdf.text('LUNCH', startX + col1Width + col2Width + col2Width / 2, yPos + 4.5, { align: 'center' });
-        pdf.text('DINNER', startX + col1Width + col2Width * 2 + col2Width / 2, yPos + 4.5, { align: 'center' });
-        yPos += 7;
-        pdf.setFont('helvetica', 'normal');
-        pdf.setFontSize(8);
-      }
+      // Check for page break - removed to ensure single page
     });
 
     // RATE row
     pdf.setFillColor(210, 210, 210);
-    pdf.rect(startX, yPos, tableWidth, 6, 'F');
+    pdf.rect(startX, yPos, tableWidth, 4, 'F');
     pdf.setFont('helvetica', 'bold');
-    pdf.setFontSize(8);
-    
-    pdf.rect(startX, yPos, col1Width, 6);
-    pdf.rect(startX + col1Width, yPos, col2Width, 6);
-    pdf.rect(startX + col1Width + col2Width, yPos, col2Width, 6);
-    pdf.rect(startX + col1Width + col2Width * 2, yPos, col2Width, 6);
+    pdf.setFontSize(6);
 
-    pdf.text('RATE', startX + col1Width / 2, yPos + 4, { align: 'center' });
-    pdf.text((monthSchedule.rates?.tiffen || 0).toString(), startX + col1Width + col2Width / 2, yPos + 4, { align: 'center' });
-    pdf.text((monthSchedule.rates?.lunch || 0).toString(), startX + col1Width + col2Width + col2Width / 2, yPos + 4, { align: 'center' });
-    pdf.text((monthSchedule.rates?.dinner || 0).toString(), startX + col1Width + col2Width * 2 + col2Width / 2, yPos + 4, { align: 'center' });
+    pdf.rect(startX, yPos, col1Width, 4);
+    pdf.rect(startX + col1Width, yPos, col2Width, 4);
+    pdf.rect(startX + col1Width + col2Width, yPos, col2Width, 4);
+    pdf.rect(startX + col1Width + col2Width * 2, yPos, col2Width, 4);
 
-    yPos += 6;
+    pdf.text('RATE', startX + col1Width / 2, yPos + 2.5, { align: 'center' });
+    pdf.text((monthSchedule.rates?.tiffen || 0).toString(), startX + col1Width + col2Width / 2, yPos + 2.5, { align: 'center' });
+    pdf.text((monthSchedule.rates?.lunch || 0).toString(), startX + col1Width + col2Width + col2Width / 2, yPos + 2.5, { align: 'center' });
+    pdf.text((monthSchedule.rates?.dinner || 0).toString(), startX + col1Width + col2Width * 2 + col2Width / 2, yPos + 2.5, { align: 'center' });
+
+    yPos += 4;
 
     // TOTAL row (count x rate format)
     pdf.setFillColor(220, 220, 220);
-    pdf.rect(startX, yPos, tableWidth, 6, 'F');
-    
-    pdf.rect(startX, yPos, col1Width, 6);
-    pdf.rect(startX + col1Width, yPos, col2Width, 6);
-    pdf.rect(startX + col1Width + col2Width, yPos, col2Width, 6);
-    pdf.rect(startX + col1Width + col2Width * 2, yPos, col2Width, 6);
+    pdf.rect(startX, yPos, tableWidth, 4, 'F');
 
-    pdf.text('TOTAL', startX + col1Width / 2, yPos + 4, { align: 'center' });
-    pdf.text(`${tiffenTotal}x${monthSchedule.rates?.tiffen || 0}`, startX + col1Width + col2Width / 2, yPos + 4, { align: 'center' });
-    pdf.text(`${lunchTotal}x${monthSchedule.rates?.lunch || 0}`, startX + col1Width + col2Width + col2Width / 2, yPos + 4, { align: 'center' });
-    pdf.text(`${dinnerTotal}x${monthSchedule.rates?.dinner || 0}`, startX + col1Width + col2Width * 2 + col2Width / 2, yPos + 4, { align: 'center' });
+    pdf.rect(startX, yPos, col1Width, 4);
+    pdf.rect(startX + col1Width, yPos, col2Width, 4);
+    pdf.rect(startX + col1Width + col2Width, yPos, col2Width, 4);
+    pdf.rect(startX + col1Width + col2Width * 2, yPos, col2Width, 4);
 
-    yPos += 6;
+    pdf.text('TOTAL', startX + col1Width / 2, yPos + 2.5, { align: 'center' });
+    pdf.text(`${tiffenTotal}x${monthSchedule.rates?.tiffen || 0}`, startX + col1Width + col2Width / 2, yPos + 2.5, { align: 'center' });
+    pdf.text(`${lunchTotal}x${monthSchedule.rates?.lunch || 0}`, startX + col1Width + col2Width + col2Width / 2, yPos + 2.5, { align: 'center' });
+    pdf.text(`${dinnerTotal}x${monthSchedule.rates?.dinner || 0}`, startX + col1Width + col2Width * 2 + col2Width / 2, yPos + 2.5, { align: 'center' });
+
+    yPos += 4;
 
     // AMOUNT row
     pdf.setFillColor(230, 230, 230);
-    pdf.rect(startX, yPos, tableWidth, 6, 'F');
-    
-    pdf.rect(startX, yPos, col1Width, 6);
-    pdf.rect(startX + col1Width, yPos, col2Width, 6);
-    pdf.rect(startX + col1Width + col2Width, yPos, col2Width, 6);
-    pdf.rect(startX + col1Width + col2Width * 2, yPos, col2Width, 6);
+    pdf.rect(startX, yPos, tableWidth, 4, 'F');
+
+    pdf.rect(startX, yPos, col1Width, 4);
+    pdf.rect(startX + col1Width, yPos, col2Width, 4);
+    pdf.rect(startX + col1Width + col2Width, yPos, col2Width, 4);
+    pdf.rect(startX + col1Width + col2Width * 2, yPos, col2Width, 4);
 
     const tiffenAmount = tiffenTotal * (monthSchedule.rates?.tiffen || 0);
     const lunchAmount = lunchTotal * (monthSchedule.rates?.lunch || 0);
     const dinnerAmount = dinnerTotal * (monthSchedule.rates?.dinner || 0);
 
-    pdf.text('AMOUNT', startX + col1Width / 2, yPos + 4, { align: 'center' });
-    pdf.text(tiffenAmount.toString(), startX + col1Width + col2Width / 2, yPos + 4, { align: 'center' });
-    pdf.text(lunchAmount.toString(), startX + col1Width + col2Width + col2Width / 2, yPos + 4, { align: 'center' });
-    pdf.text(dinnerAmount.toString(), startX + col1Width + col2Width * 2 + col2Width / 2, yPos + 4, { align: 'center' });
+    pdf.text('AMOUNT', startX + col1Width / 2, yPos + 2.5, { align: 'center' });
+    pdf.text(tiffenAmount.toString(), startX + col1Width + col2Width / 2, yPos + 2.5, { align: 'center' });
+    pdf.text(lunchAmount.toString(), startX + col1Width + col2Width + col2Width / 2, yPos + 2.5, { align: 'center' });
+    pdf.text(dinnerAmount.toString(), startX + col1Width + col2Width * 2 + col2Width / 2, yPos + 2.5, { align: 'center' });
 
-    yPos += 6;
+    yPos += 4;
 
     // GRAND TOTAL row - label at left, amount at right
     pdf.setFillColor(255, 220, 150);
-    pdf.rect(startX, yPos, tableWidth, 7, 'F');
-    pdf.setFontSize(10);
-    
-    pdf.rect(startX, yPos, tableWidth, 7);
+    pdf.rect(startX, yPos, tableWidth, 5, 'F');
+    pdf.setFontSize(8);
+
+    pdf.rect(startX, yPos, tableWidth, 5);
 
     const grandTotal = tiffenAmount + lunchAmount + dinnerAmount;
-    pdf.text('GRAND TOTAL', startX + 5, yPos + 5);
-    pdf.text(grandTotal.toFixed(2), startX + tableWidth - 5, yPos + 5, { align: 'right' });
+    pdf.text('GRAND TOTAL', startX + 5, yPos + 3.5);
+    pdf.text(grandTotal.toFixed(2), startX + tableWidth - 5, yPos + 3.5, { align: 'right' });
 
     // Save PDF
     pdf.save(`${companyName}_${formatMonthDisplay(monthSchedule.month)}_Bill.pdf`);
