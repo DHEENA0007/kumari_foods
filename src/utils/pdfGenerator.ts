@@ -93,27 +93,48 @@ const renderTamilTextToImage = (text: string, fontSize: number = 14, bold: boole
     const ctx = canvas.getContext('2d');
     
     if (!ctx) {
+      console.error('Failed to get canvas context');
       resolve('');
       return;
     }
 
-    // Load the Tamil font (use bold variant if requested)
-    const fontUrl = bold 
-      ? 'url(/Noto_Sans_Tamil/static/NotoSansTamil-Bold.ttf)'
-      : 'url(/Noto_Sans_Tamil/NotoSansTamil-VariableFont_wdth,wght.ttf)';
-    const font = new FontFace('NotoSansTamil', fontUrl);
-    
-    font.load().then((loadedFont) => {
-      document.fonts.add(loadedFont);
+    // Check if font is already available from Google Fonts (loaded in index.html)
+    // Otherwise load from local files
+    const checkFontAvailable = async () => {
+      // First check if Google Fonts version is already loaded
+      if (document.fonts.check('12px "Noto Sans Tamil"')) {
+        console.log('Using Noto Sans Tamil from Google Fonts');
+        return true;
+      }
       
-      // Set canvas font with bold weight
-      const fontWeight = bold ? 'bold' : 'normal';
-      ctx.font = `${fontWeight} ${fontSize}px NotoSansTamil`;
+      // Otherwise load from local files
+      const fontUrl = bold 
+        ? 'url(/Noto_Sans_Tamil/static/NotoSansTamil-Bold.ttf)'
+        : 'url(/Noto_Sans_Tamil/NotoSansTamil-VariableFont_wdth,wght.ttf)';
+      
+      console.log('Loading Tamil font for canvas from:', fontUrl);
+      const font = new FontFace('NotoSansTamilCanvas', fontUrl);
+      
+      const loadedFont = await font.load();
+      console.log('Tamil font loaded successfully for canvas');
+      document.fonts.add(loadedFont);
+      await document.fonts.ready;
+      return false;
+    };
+    
+    checkFontAvailable().then(() => {
+      console.log('Fonts ready, rendering Tamil text to canvas');
+      
+      // Set canvas font with bold weight - prefer Google Fonts, fallback to local
+      const fontWeight = bold ? '700' : '400';
+      ctx.font = `${fontWeight} ${fontSize}px "Noto Sans Tamil", NotoSansTamilCanvas, sans-serif`;
       
       // Measure text
       const metrics = ctx.measureText(text);
       const textWidth = metrics.width;
       const textHeight = fontSize * 1.8; // Add more padding for better quality
+      
+      console.log(`Text width: ${textWidth}, height: ${textHeight}`);
       
       // Set canvas size with high DPI for better quality
       const scale = 3; // Higher scale for better quality
@@ -125,7 +146,7 @@ const renderTamilTextToImage = (text: string, fontSize: number = 14, bold: boole
       
       // Clear canvas and set font again (needed after resize)
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.font = `${fontWeight} ${fontSize}px NotoSansTamil`;
+      ctx.font = `${fontWeight} ${fontSize}px "Noto Sans Tamil", NotoSansTamilCanvas, sans-serif`;
       ctx.fillStyle = '#000000';
       ctx.textBaseline = 'middle';
       ctx.textAlign = 'center';
@@ -144,8 +165,11 @@ const renderTamilTextToImage = (text: string, fontSize: number = 14, bold: boole
       ctx.fillText(text, (textWidth + 20) / 2, textHeight / 2);
       
       // Convert to base64 with high quality
-      resolve(canvas.toDataURL('image/png', 1.0));
-    }).catch(() => {
+      const imageData = canvas.toDataURL('image/png', 1.0);
+      console.log('Tamil text rendered to image successfully');
+      resolve(imageData);
+    }).catch((error) => {
+      console.error('Failed to load Tamil font for canvas:', error);
       resolve('');
     });
   });
@@ -202,13 +226,24 @@ export const generateMonthlyBillPDF = async (
     }
 
     // 2. Add centered shop name in Tamil as image
-    if (tamilTextImage) {
+    if (tamilTextImage && tamilTextImage.length > 100) {
+      console.log('Using rendered Tamil text image');
       const textImgWidth = 70; // Larger width for better visibility
       const textImgHeight = 12; // Larger height for better quality
-      pdf.addImage(tamilTextImage, 'PNG', (pageWidth - textImgWidth) / 2, yPos - 1, textImgWidth, textImgHeight);
-      yPos += textImgHeight + 1;
+      try {
+        pdf.addImage(tamilTextImage, 'PNG', (pageWidth - textImgWidth) / 2, yPos - 1, textImgWidth, textImgHeight);
+        yPos += textImgHeight + 1;
+      } catch (error) {
+        console.error('Failed to add Tamil image to PDF:', error);
+        // Fallback to text
+        pdf.setFontSize(14);
+        pdf.setFont('NotoSansTamil', 'normal');
+        pdf.text('குமரி ஃபுட்ஸ்', pageWidth / 2, yPos, { align: 'center' });
+        yPos += 6;
+      }
     } else {
       // Fallback if image rendering fails
+      console.log('Using fallback text rendering for shop name');
       pdf.setFontSize(14);
       pdf.setFont('NotoSansTamil', 'normal');
       pdf.text('குமரி ஃபுட்ஸ்', pageWidth / 2, yPos, { align: 'center' });
