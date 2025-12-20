@@ -6,6 +6,7 @@ export const useStore = create<AppState>((set, get) => ({
   companies: [],
   schedules: {}, // Legacy, not used
   mealSchedules: {},
+  weeklySchedules: [],
   selectedCompanyId: null,
 
   addCompany: async (name: string, accountDetails?: AccountDetails) => {
@@ -134,22 +135,86 @@ export const useStore = create<AppState>((set, get) => ({
     return (state.mealSchedules[companyId] || []).find(s => s.month === month);
   },
 
+  // Weekly Schedule Actions
+  addWeeklySchedule: async (schedule) => {
+    set((state) => ({
+      weeklySchedules: [...state.weeklySchedules, schedule]
+    }));
+    try {
+      await firebaseService.saveWeeklySchedule(schedule);
+    } catch (error) {
+      console.error('Failed to save weekly schedule to Firebase:', error);
+    }
+  },
+
+  updateWeeklySchedule: async (scheduleId, entries) => {
+    set((state) => ({
+      weeklySchedules: state.weeklySchedules.map(s =>
+        s.id === scheduleId ? { ...s, entries } : s
+      )
+    }));
+    try {
+      const state = get();
+      const schedule = state.weeklySchedules.find(s => s.id === scheduleId);
+      if (schedule) {
+        await firebaseService.updateWeeklySchedule(schedule);
+      }
+    } catch (error) {
+      console.error('Failed to update weekly schedule in Firebase:', error);
+    }
+  },
+
+  updateWeeklyScheduleRates: async (scheduleId, rates) => {
+    set((state) => ({
+      weeklySchedules: state.weeklySchedules.map(s =>
+        s.id === scheduleId ? { ...s, rates } : s
+      )
+    }));
+    try {
+      const state = get();
+      const schedule = state.weeklySchedules.find(s => s.id === scheduleId);
+      if (schedule) {
+        await firebaseService.updateWeeklySchedule(schedule);
+      }
+    } catch (error) {
+      console.error('Failed to update weekly schedule rates in Firebase:', error);
+    }
+  },
+
+  deleteWeeklySchedule: async (scheduleId) => {
+    set((state) => ({
+      weeklySchedules: state.weeklySchedules.filter(s => s.id !== scheduleId)
+    }));
+    try {
+      await firebaseService.deleteWeeklySchedule(scheduleId);
+    } catch (error) {
+      console.error('Failed to delete weekly schedule from Firebase:', error);
+    }
+  },
+
+  getWeeklySchedulesByCompany: (companyId) => {
+    const state = get();
+    return state.weeklySchedules.filter(s => s.companyId === companyId);
+  },
+
   loadFromStorage: async () => {
     try {
       console.log('📥 Loading data from Firebase...');
       
-      // Load companies and monthly meal schedules from Firebase
+      // Load companies, monthly meal schedules, and weekly schedules from Firebase
       const companies = await firebaseService.getAllCompanies();
       const mealSchedules = await firebaseService.getAllMealSchedules();
+      const weeklySchedules = await firebaseService.getAllWeeklySchedules();
 
       set({
         companies,
         schedules: {}, // Legacy, not used
         mealSchedules,
+        weeklySchedules,
         selectedCompanyId: companies.length > 0 ? companies[0].id : null
       });
       
-      console.log(`✅ Loaded ${companies.length} companies and ${Object.keys(mealSchedules).length} meal schedules from Firebase`);
+      console.log(`✅ Loaded ${companies.length} companies, ${Object.keys(mealSchedules).length} meal schedules, and ${weeklySchedules.length} weekly schedules from Firebase`);
     } catch (error) {
       console.error('Failed to load from Firebase:', error);
       // Initialize with empty state if Firebase fails
@@ -157,6 +222,7 @@ export const useStore = create<AppState>((set, get) => ({
         companies: [],
         schedules: {},
         mealSchedules: {},
+        weeklySchedules: [],
         selectedCompanyId: null
       });
     }

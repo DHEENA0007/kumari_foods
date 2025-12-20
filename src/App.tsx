@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Calendar } from 'lucide-react';
 import { Sidebar } from '@/components/Sidebar';
 import { CompanyDialog } from '@/components/CompanyDialog';
 import { DeleteDialog } from '@/components/DeleteDialog';
 import { WeeklySchedule } from '@/components/WeeklySchedule';
+import { SimpleWeeklyScheduleDialog } from '@/components/SimpleWeeklyScheduleDialog';
+import { Button } from '@/components/ui/button';
 
 import { useStore } from '@/store';
 import type { Company, AccountDetails } from '@/types';
@@ -12,6 +14,7 @@ function App() {
   const { loadFromStorage, addCompany, updateCompany, deleteCompany } = useStore();
   const [companyDialogOpen, setCompanyDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [weeklyScheduleDialogOpen, setWeeklyScheduleDialogOpen] = useState(false);
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
   const [deletingCompany, setDeletingCompany] = useState<Company | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -75,7 +78,14 @@ function App() {
             </div>
 
             <div className="flex items-center gap-4">
-              {/* Cloud button removed as unnecessary */}
+              <Button 
+                onClick={() => setWeeklyScheduleDialogOpen(true)}
+                className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-md flex items-center gap-2"
+              >
+                <Calendar className="w-4 h-4" />
+                <span className="hidden sm:inline">Week Schedule</span>
+                <span className="sm:hidden">Week</span>
+              </Button>
             </div>
           </div>
         </div>
@@ -144,6 +154,11 @@ function App() {
         onClose={() => setDeleteDialogOpen(false)}
         onConfirm={handleConfirmDelete}
         company={deletingCompany}
+      />
+
+      <SimpleWeeklyScheduleDialog
+        open={weeklyScheduleDialogOpen}
+        onClose={() => setWeeklyScheduleDialogOpen(false)}
       />
     </div>
   );

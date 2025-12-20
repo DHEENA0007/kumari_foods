@@ -9,10 +9,11 @@ import {
   query,
   writeBatch 
 } from 'firebase/firestore';
-import type { Company, MealSchedule } from '@/types';
+import type { Company, MealSchedule, WeeklySchedule } from '@/types';
 
 const COMPANIES_COLLECTION = 'companies';
 const MEAL_SCHEDULES_COLLECTION = 'mealSchedules';
+const WEEKLY_SCHEDULES_COLLECTION = 'weeklySchedules';
 
 class FirebaseService {
   isConfigured(): boolean {
@@ -114,6 +115,53 @@ class FirebaseService {
       console.log('Meal schedules deleted from Firebase:', companyId);
     } catch (error) {
       console.error('Error deleting meal schedules from Firebase:', error);
+      throw error;
+    }
+  }
+
+  // Weekly Schedules Operations
+  async getAllWeeklySchedules(): Promise<WeeklySchedule[]> {
+    try {
+      const querySnapshot = await getDocs(collection(db, WEEKLY_SCHEDULES_COLLECTION));
+      const weeklySchedules: WeeklySchedule[] = [];
+      
+      querySnapshot.forEach((docSnapshot) => {
+        weeklySchedules.push(docSnapshot.data() as WeeklySchedule);
+      });
+      
+      return weeklySchedules;
+    } catch (error) {
+      console.error('Error fetching weekly schedules:', error);
+      return [];
+    }
+  }
+
+  async saveWeeklySchedule(schedule: WeeklySchedule): Promise<void> {
+    try {
+      await setDoc(doc(db, WEEKLY_SCHEDULES_COLLECTION, schedule.id), schedule);
+      console.log('Weekly schedule saved to Firebase:', schedule.id);
+    } catch (error) {
+      console.error('Error saving weekly schedule to Firebase:', error);
+      throw error;
+    }
+  }
+
+  async updateWeeklySchedule(schedule: WeeklySchedule): Promise<void> {
+    try {
+      await setDoc(doc(db, WEEKLY_SCHEDULES_COLLECTION, schedule.id), schedule, { merge: true });
+      console.log('Weekly schedule updated in Firebase:', schedule.id);
+    } catch (error) {
+      console.error('Error updating weekly schedule in Firebase:', error);
+      throw error;
+    }
+  }
+
+  async deleteWeeklySchedule(scheduleId: string): Promise<void> {
+    try {
+      await deleteDoc(doc(db, WEEKLY_SCHEDULES_COLLECTION, scheduleId));
+      console.log('Weekly schedule deleted from Firebase:', scheduleId);
+    } catch (error) {
+      console.error('Error deleting weekly schedule from Firebase:', error);
       throw error;
     }
   }
