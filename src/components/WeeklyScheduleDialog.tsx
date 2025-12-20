@@ -30,20 +30,20 @@ const getCurrentWeekDates = (): { start: string; end: string } => {
   const now = new Date();
   const dayOfWeek = now.getDay();
   const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // Adjust to Monday
-  
+
   const monday = new Date(now);
   monday.setDate(now.getDate() + diff);
-  
+
   const sunday = new Date(monday);
   sunday.setDate(monday.getDate() + 6);
-  
+
   const formatDate = (date: Date) => {
     const dd = String(date.getDate()).padStart(2, '0');
     const mm = String(date.getMonth() + 1).padStart(2, '0');
     const yyyy = date.getFullYear();
     return `${dd}-${mm}-${yyyy}`;
   };
-  
+
   return {
     start: formatDate(monday),
     end: formatDate(sunday)
@@ -52,14 +52,14 @@ const getCurrentWeekDates = (): { start: string; end: string } => {
 
 export function WeeklyScheduleDialog({ open, onClose, companyId, companyName }: WeeklyScheduleDialogProps) {
   const { addWeeklySchedule, updateWeeklySchedule, updateWeeklyScheduleRates, companies } = useStore();
-  
+
   const [weekDates, setWeekDates] = useState(getCurrentWeekDates());
   const [entries, setEntries] = useState<WeeklyMealEntry[]>(
     DAYS.map(day => ({ day, tiffen: '', lunch: '', dinner: '' }))
   );
   const [rates, setRates] = useState({ tiffen: 0, lunch: 0, dinner: 0 });
   const [currentScheduleId, setCurrentScheduleId] = useState<string | null>(null);
-  
+
   const company = companies.find(c => c.id === companyId);
 
   useEffect(() => {
@@ -103,7 +103,7 @@ export function WeeklyScheduleDialog({ open, onClose, companyId, companyName }: 
 
   const handleDownloadPDF = async () => {
     if (!company) return;
-    
+
     const schedule: WeeklySchedule = {
       id: currentScheduleId || crypto.randomUUID(),
       companyId,
@@ -113,7 +113,7 @@ export function WeeklyScheduleDialog({ open, onClose, companyId, companyName }: 
       rates,
       createdAt: new Date().toISOString()
     };
-    
+
     await generateWeeklySchedulePDF(companyName, company.accountDetails, schedule);
   };
 
@@ -121,7 +121,7 @@ export function WeeklyScheduleDialog({ open, onClose, companyId, companyName }: 
     const tiffenCount = entries.reduce((sum, e) => sum + (parseInt(e.tiffen?.toString() || '0') || 0), 0);
     const lunchCount = entries.reduce((sum, e) => sum + (parseInt(e.lunch?.toString() || '0') || 0), 0);
     const dinnerCount = entries.reduce((sum, e) => sum + (parseInt(e.dinner?.toString() || '0') || 0), 0);
-    
+
     return {
       tiffenCount,
       lunchCount,

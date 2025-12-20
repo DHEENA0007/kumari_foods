@@ -39,20 +39,20 @@ const getCurrentWeekDates = (): { start: string; end: string } => {
   const now = new Date();
   const dayOfWeek = now.getDay();
   const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // Adjust to Monday
-  
+
   const monday = new Date(now);
   monday.setDate(now.getDate() + diff);
-  
+
   const sunday = new Date(monday);
   sunday.setDate(monday.getDate() + 6);
-  
+
   const formatDate = (date: Date) => {
     const dd = String(date.getDate()).padStart(2, '0');
     const mm = String(date.getMonth() + 1).padStart(2, '0');
     const yyyy = date.getFullYear();
     return `${dd}-${mm}-${yyyy}`;
   };
-  
+
   return {
     start: formatDate(monday),
     end: formatDate(sunday)
@@ -61,7 +61,7 @@ const getCurrentWeekDates = (): { start: string; end: string } => {
 
 export function SimpleWeeklyScheduleDialog({ open, onClose }: SimpleWeeklyScheduleDialogProps) {
   const { addWeeklySchedule, updateWeeklySchedule } = useStore();
-  
+
   const [weekDates, setWeekDates] = useState(getCurrentWeekDates());
   const [entries, setEntries] = useState<WeeklyMealEntry[]>(
     DAYS.map(day => ({ day, tiffen: '', lunch: '', dinner: '' }))
@@ -72,11 +72,11 @@ export function SimpleWeeklyScheduleDialog({ open, onClose }: SimpleWeeklySchedu
     if (open) {
       setWeekDates(getCurrentWeekDates());
       // Load default schedule on first open
-      setEntries(DAYS.map(day => ({ 
-        day, 
-        tiffen: DEFAULT_SCHEDULE[day].tiffen, 
-        lunch: DEFAULT_SCHEDULE[day].lunch, 
-        dinner: DEFAULT_SCHEDULE[day].dinner 
+      setEntries(DAYS.map(day => ({
+        day,
+        tiffen: DEFAULT_SCHEDULE[day].tiffen,
+        lunch: DEFAULT_SCHEDULE[day].lunch,
+        dinner: DEFAULT_SCHEDULE[day].dinner
       })));
       setCurrentScheduleId(null);
     }
@@ -113,25 +113,16 @@ export function SimpleWeeklyScheduleDialog({ open, onClose }: SimpleWeeklySchedu
   };
 
   const handleDownloadPDF = async () => {
-    const schedule: WeeklySchedule = {
-      id: currentScheduleId || crypto.randomUUID(),
-      companyId: 'general',
-      weekStartDate: weekDates.start,
-      weekEndDate: weekDates.end,
-      entries,
-      rates: { tiffen: 0, lunch: 0, dinner: 0 }, // No rates
-      createdAt: new Date().toISOString()
-    };
-    
-    await generateWeeklySchedulePDF('Weekly Schedule', undefined, schedule);
+    const fileName = `Weekly_Schedule_${weekDates.start}_to_${weekDates.end}`;
+    await generateWeeklySchedulePDF('weekly-schedule-table', fileName);
   };
 
   const handleLoadDefault = () => {
-    setEntries(DAYS.map(day => ({ 
-      day, 
-      tiffen: DEFAULT_SCHEDULE[day].tiffen, 
-      lunch: DEFAULT_SCHEDULE[day].lunch, 
-      dinner: DEFAULT_SCHEDULE[day].dinner 
+    setEntries(DAYS.map(day => ({
+      day,
+      tiffen: DEFAULT_SCHEDULE[day].tiffen,
+      lunch: DEFAULT_SCHEDULE[day].lunch,
+      dinner: DEFAULT_SCHEDULE[day].dinner
     })));
   };
 
@@ -144,7 +135,7 @@ export function SimpleWeeklyScheduleDialog({ open, onClose }: SimpleWeeklySchedu
     const tiffenCount = entries.filter(e => e.tiffen && e.tiffen.toString().trim() !== '').length;
     const lunchCount = entries.filter(e => e.lunch && e.lunch.toString().trim() !== '').length;
     const dinnerCount = entries.filter(e => e.dinner && e.dinner.toString().trim() !== '').length;
-    
+
     return {
       tiffenCount,
       lunchCount,
@@ -169,7 +160,7 @@ export function SimpleWeeklyScheduleDialog({ open, onClose }: SimpleWeeklySchedu
 
         <div className="space-y-4">
           {/* Weekly Schedule Table */}
-          <Card className="overflow-hidden">
+          <Card id="weekly-schedule-table" className="overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-slate-100 border-b">
