@@ -93,7 +93,7 @@ const renderTamilTextToImage = (text: string, fontSize: number = 14, bold: boole
     document.fonts.ready.then(() => {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
-      
+
       if (!ctx) {
         console.error('Failed to get canvas context');
         resolve('');
@@ -101,45 +101,45 @@ const renderTamilTextToImage = (text: string, fontSize: number = 14, bold: boole
       }
 
       console.log('Rendering Tamil text to canvas');
-      
+
       // Use Google Fonts directly (loaded in index.html)
       const fontWeight = bold ? '700' : '400';
       ctx.font = `${fontWeight} ${fontSize}px "Noto Sans Tamil", sans-serif`;
-      
+
       // Measure text
       const metrics = ctx.measureText(text);
       const textWidth = metrics.width;
       const textHeight = fontSize * 1.8;
-      
+
       console.log(`Text dimensions: ${textWidth}x${textHeight}`);
-      
+
       // Set canvas size with high DPI for better quality
       const scale = 3;
       canvas.width = (textWidth + 20) * scale;
       canvas.height = textHeight * scale;
-      
+
       // Scale context for high DPI rendering
       ctx.scale(scale, scale);
-      
+
       // Set font again after canvas resize
       ctx.font = `${fontWeight} ${fontSize}px "Noto Sans Tamil", sans-serif`;
       ctx.fillStyle = '#000000';
       ctx.textBaseline = 'middle';
       ctx.textAlign = 'center';
-      
+
       // Enable antialiasing
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
-      
+
       // Add subtle shadow for better readability
       ctx.shadowColor = 'rgba(0, 0, 0, 0.1)';
       ctx.shadowBlur = 1;
       ctx.shadowOffsetX = 0.5;
       ctx.shadowOffsetY = 0.5;
-      
+
       // Draw text centered
       ctx.fillText(text, (textWidth + 20) / 2, textHeight / 2);
-      
+
       // Convert to base64
       const imageData = canvas.toDataURL('image/png', 1.0);
       console.log('Tamil text rendered successfully');
@@ -171,7 +171,7 @@ export const generateMonthlyBillPDF = async (
   try {
     const logoBase64 = await loadImageAsBase64('/Logo.png');
     const tamilTextImage = await renderTamilTextToImage('குமரி புட்ஸ்', 48, true);
-    
+
     const pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
@@ -226,6 +226,13 @@ export const generateMonthlyBillPDF = async (
       yPos += 6;
     }
 
+    // Add Phone Number at the top right
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(10);
+    pdf.setTextColor(0, 100, 200); // Blueish color
+    pdf.text('Phone: 9677012455', pageWidth - 10, 15, { align: 'right' });
+    pdf.setTextColor(0, 0, 0); // Reset to black
+
     // 3. Add month at top left
     pdf.setFontSize(8);
     pdf.setFont('helvetica', 'bold');
@@ -258,8 +265,9 @@ export const generateMonthlyBillPDF = async (
     };
 
     // 4. Draw account info rows (part of unified table)
-    yPos = drawInfoRow('NAME:', companyName.toUpperCase(), yPos);
-    yPos = drawInfoRow('BANK:', companyDetails?.bankName || '', yPos);
+    yPos = drawInfoRow('Company Name', companyName.toUpperCase(), yPos);
+    yPos = drawInfoRow('Account Holder Name', companyDetails?.accountHolderName || '', yPos);
+    yPos = drawInfoRow('Bank Name', companyDetails?.bankName || '', yPos);
     yPos = drawInfoRow('ACCOUNT NO:', companyDetails?.accountNumber || '', yPos);
     yPos = drawInfoRow('IFSC CODE:', companyDetails?.ifscCode || '', yPos);
 
@@ -333,13 +341,13 @@ export const generateMonthlyBillPDF = async (
 
       // Date
       pdf.text(entry.date, startX + col1Width / 2, yPos + 4, { align: 'center' });
-      
+
       // Tiffen
       pdf.text(entry.tiffen?.toString() || '-', startX + col1Width + col2Width / 2, yPos + 4, { align: 'center' });
-      
+
       // Lunch
       pdf.text(entry.lunch?.toString() || '-', startX + col1Width + col2Width + col2Width / 2, yPos + 4, { align: 'center' });
-      
+
       // Dinner
       pdf.text(entry.dinner?.toString() || '-', startX + col1Width + col2Width * 2 + col2Width / 2, yPos + 4, { align: 'center' });
 
@@ -412,6 +420,15 @@ export const generateMonthlyBillPDF = async (
     const grandTotal = tiffenAmount + lunchAmount + dinnerAmount;
     pdf.text('GRAND TOTAL', startX + 5, yPos + 3.5);
     pdf.text(grandTotal.toFixed(2), startX + tableWidth - 5, yPos + 3.5, { align: 'right' });
+
+    // Add Address at the bottom (Absolute positioning)
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(9);
+    pdf.setTextColor(0, 0, 0);
+
+    // Address (Centered at bottom)
+    pdf.text('No: 28/19, Kalavanar Nagar, Thirupathi Kudai Salai, Ambattur, Chennai-600 058', pageWidth / 2, pageHeight - 10, { align: 'center' });
 
     // Save PDF
     pdf.save(`${companyName}_${formatMonthDisplay(monthSchedule.month)}_Bill.pdf`);

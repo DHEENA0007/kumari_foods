@@ -81,15 +81,28 @@ const generateFromElement = async (element: HTMLElement, fileName: string) => {
 
     const header = document.createElement('div');
     header.style.textAlign = 'center';
-    header.style.marginBottom = '20px';
+    header.style.marginBottom = '10px';
     header.style.padding = '10px';
+    header.style.position = 'relative';
     header.innerHTML = `
-      <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;">
-        <img src="/Logo.png" style="height: 80px; width: auto;" />
-        <h1 style="font-size: 32px; font-weight: 800; color: #000000; margin: 0;" class="noto-sans-tamil">குமரி புட்ஸ்</h1>
+      <div style="position: absolute; top: 10px; right: 10px; font-weight: bold; font-size: 14px; color: #0064C8;">Phone: 9677012455</div>
+      <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;">
+        <img src="/Logo.png" style="height: 60px; width: auto;" />
+        <h1 style="font-size: 28px; font-weight: 800; color: #000000; margin: 0;" class="noto-sans-tamil">குமரி புட்ஸ்</h1>
       </div>
     `;
     clone.insertBefore(header, clone.firstChild);
+
+    // Add footer with address
+    const footer = document.createElement('div');
+    footer.style.textAlign = 'center';
+    footer.style.marginTop = '20px';
+    footer.style.padding = '10px';
+    footer.style.paddingBottom = '30px'; // Extra padding to prevent cutoff
+    footer.innerHTML = `
+      <div style="font-size: 12px; color: #000000;">No: 28/19, Kalavanar Nagar, Thirupathi Kudai Salai, Ambattur, Chennai-600 058</div>
+    `;
+    clone.appendChild(footer);
 
     // Ensure table lines are visible and clean
     const table = clone.querySelector('table');
