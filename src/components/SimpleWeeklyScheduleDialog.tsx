@@ -14,13 +14,13 @@ interface SimpleWeeklyScheduleDialogProps {
 
 const DAYS: DayOfWeek[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 const DAY_LABELS: Record<DayOfWeek, string> = {
-  monday: 'Monday',
-  tuesday: 'Tuesday',
-  wednesday: 'Wednesday',
-  thursday: 'Thursday',
-  friday: 'Friday',
-  saturday: 'Saturday',
-  sunday: 'Sunday'
+  monday: 'திங்கள்',
+  tuesday: 'செவ்வாய்',
+  wednesday: 'புதன்',
+  thursday: 'வியாழன்',
+  friday: 'வெள்ளி',
+  saturday: 'சனி',
+  sunday: 'ஞாயிறு'
 };
 
 // Default weekly schedule template
@@ -156,12 +156,12 @@ export function SimpleWeeklyScheduleDialog({ open, onClose }: SimpleWeeklySchedu
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className="flex items-center gap-2 noto-sans-tamil">
             <Calendar className="w-5 h-5" />
-            Weekly Schedule
+            வாராந்திர அட்டவணை
           </DialogTitle>
-          <p className="text-sm text-slate-500">
-            Week: {weekDates.start} to {weekDates.end}
+          <p className="text-sm text-slate-500 noto-sans-tamil">
+            வாரம்: {weekDates.start} முதல் {weekDates.end} வரை
           </p>
         </DialogHeader>
 
@@ -174,10 +174,10 @@ export function SimpleWeeklyScheduleDialog({ open, onClose }: SimpleWeeklySchedu
                 <table className="w-full">
                   <thead className="bg-slate-100 border-b">
                     <tr>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Day</th>
-                      <th className="px-4 py-3 text-center text-sm font-semibold text-slate-700">Tiffen</th>
-                      <th className="px-4 py-3 text-center text-sm font-semibold text-slate-700">Lunch</th>
-                      <th className="px-4 py-3 text-center text-sm font-semibold text-slate-700">Dinner</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 noto-sans-tamil">நாள்</th>
+                      <th className="px-4 py-3 text-center text-sm font-semibold text-slate-700 noto-sans-tamil">காலை</th>
+                      <th className="px-4 py-3 text-center text-sm font-semibold text-slate-700 noto-sans-tamil">மதியம்</th>
+                      <th className="px-4 py-3 text-center text-sm font-semibold text-slate-700 noto-sans-tamil">இரவு</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -185,7 +185,7 @@ export function SimpleWeeklyScheduleDialog({ open, onClose }: SimpleWeeklySchedu
                       const entry = entries.find(e => e.day === day);
                       return (
                         <tr key={day} className={index % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
-                          <td className="px-4 py-3 text-sm font-medium text-slate-700">{DAY_LABELS[day]}</td>
+                          <td className="px-4 py-3 text-sm font-medium text-slate-700 noto-sans-tamil">{DAY_LABELS[day]}</td>
                           <td className="px-4 py-3">
                             <input
                               type="text"
@@ -223,10 +223,10 @@ export function SimpleWeeklyScheduleDialog({ open, onClose }: SimpleWeeklySchedu
 
             {/* Rates Configuration */}
             <Card className="p-4 bg-gradient-to-br from-orange-50 to-amber-50">
-              <h3 className="font-semibold mb-3 text-slate-800">Meal Rates</h3>
+              <h3 className="font-semibold mb-3 text-slate-800 noto-sans-tamil">உணவு கட்டணங்கள்</h3>
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-slate-700">Tiffen Rate</label>
+                  <label className="text-sm font-medium text-slate-700 noto-sans-tamil">காலை கட்டணம்</label>
                   <input
                     type="number"
                     value={rates.tiffen}
@@ -236,7 +236,7 @@ export function SimpleWeeklyScheduleDialog({ open, onClose }: SimpleWeeklySchedu
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-slate-700">Lunch Rate</label>
+                  <label className="text-sm font-medium text-slate-700 noto-sans-tamil">மதிய கட்டணம்</label>
                   <input
                     type="number"
                     value={rates.lunch}
@@ -246,7 +246,7 @@ export function SimpleWeeklyScheduleDialog({ open, onClose }: SimpleWeeklySchedu
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-slate-700">Dinner Rate</label>
+                  <label className="text-sm font-medium text-slate-700 noto-sans-tamil">இரவு கட்டணம்</label>
                   <input
                     type="number"
                     value={rates.dinner}
@@ -261,22 +261,22 @@ export function SimpleWeeklyScheduleDialog({ open, onClose }: SimpleWeeklySchedu
 
           {/* Summary */}
           <Card className="p-4 bg-gradient-to-br from-green-50 to-blue-50">
-            <h3 className="font-semibold mb-3 text-slate-800">Week Summary</h3>
+            <h3 className="font-semibold mb-3 text-slate-800 noto-sans-tamil">வார சுருக்கம்</h3>
             <div className="grid grid-cols-3 gap-4">
               <div className="text-center p-4 bg-white/50 rounded-lg">
-                <p className="text-xs text-slate-600 mb-1">Tiffen</p>
+                <p className="text-xs text-slate-600 mb-1 noto-sans-tamil">காலை</p>
                 <p className="text-3xl font-bold text-orange-600">{totals.tiffenCount}</p>
-                <p className="text-xs text-slate-500 mt-1">Days Filled</p>
+                <p className="text-xs text-slate-500 mt-1 noto-sans-tamil">நாட்கள் நிரப்பப்பட்டது</p>
               </div>
               <div className="text-center p-4 bg-white/50 rounded-lg">
-                <p className="text-xs text-slate-600 mb-1">Lunch</p>
+                <p className="text-xs text-slate-600 mb-1 noto-sans-tamil">மதியம்</p>
                 <p className="text-3xl font-bold text-blue-600">{totals.lunchCount}</p>
-                <p className="text-xs text-slate-500 mt-1">Days Filled</p>
+                <p className="text-xs text-slate-500 mt-1 noto-sans-tamil">நாட்கள் நிரப்பப்பட்டது</p>
               </div>
               <div className="text-center p-4 bg-white/50 rounded-lg">
-                <p className="text-xs text-slate-600 mb-1">Dinner</p>
+                <p className="text-xs text-slate-600 mb-1 noto-sans-tamil">இரவு</p>
                 <p className="text-3xl font-bold text-purple-600">{totals.dinnerCount}</p>
-                <p className="text-xs text-slate-500 mt-1">Days Filled</p>
+                <p className="text-xs text-slate-500 mt-1 noto-sans-tamil">நாட்கள் நிரப்பப்பட்டது</p>
               </div>
             </div>
           </Card>
@@ -284,22 +284,22 @@ export function SimpleWeeklyScheduleDialog({ open, onClose }: SimpleWeeklySchedu
           {/* Action Buttons */}
           <div className="flex gap-3 justify-between">
             <div className="flex gap-2">
-              <Button variant="outline" onClick={handleLoadDefault} className="border-green-500 text-green-600 hover:bg-green-50">
-                Load Default
+              <Button variant="outline" onClick={handleLoadDefault} className="border-green-500 text-green-600 hover:bg-green-50 noto-sans-tamil">
+                இயல்புநிலை
               </Button>
-              <Button variant="outline" onClick={handleClearAll} className="border-red-500 text-red-600 hover:bg-red-50">
-                Clear All
+              <Button variant="outline" onClick={handleClearAll} className="border-red-500 text-red-600 hover:bg-red-50 noto-sans-tamil">
+                அழி
               </Button>
             </div>
             <div className="flex gap-3">
-              <Button variant="outline" onClick={onClose}>
-                Cancel
+              <Button variant="outline" onClick={onClose} className="noto-sans-tamil">
+                ரத்து
               </Button>
-              <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700">
-                Save Schedule
+              <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700 noto-sans-tamil">
+                சேமி
               </Button>
-              <Button onClick={handleDownloadPDF} className="bg-orange-600 hover:bg-orange-700">
-                Download PDF
+              <Button onClick={handleDownloadPDF} className="bg-orange-600 hover:bg-orange-700 noto-sans-tamil">
+                PDF பதிவிறக்கு
               </Button>
             </div>
           </div>
