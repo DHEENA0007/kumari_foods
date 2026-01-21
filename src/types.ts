@@ -58,6 +58,11 @@ export interface WeeklySchedule {
     lunch?: number;
     dinner?: number;
   };
+  notes?: {
+    tiffen?: string;
+    lunch?: string;
+    dinner?: string;
+  };
   createdAt: string;
 }
 
@@ -83,6 +88,7 @@ export interface AppState {
   addWeeklySchedule: (schedule: WeeklySchedule) => void;
   updateWeeklySchedule: (scheduleId: string, entries: WeeklyMealEntry[]) => void;
   updateWeeklyScheduleRates: (scheduleId: string, rates: { tiffen?: number; lunch?: number; dinner?: number }) => void;
+  updateWeeklyScheduleNotes: (scheduleId: string, notes: { tiffen?: string; lunch?: string; dinner?: string }) => void;
   deleteWeeklySchedule: (scheduleId: string) => void;
   getWeeklySchedulesByCompany: (companyId: string) => WeeklySchedule[];
   

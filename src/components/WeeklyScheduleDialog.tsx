@@ -51,13 +51,14 @@ const getCurrentWeekDates = (): { start: string; end: string } => {
 };
 
 export function WeeklyScheduleDialog({ open, onClose, companyId, companyName }: WeeklyScheduleDialogProps) {
-  const { addWeeklySchedule, updateWeeklySchedule, updateWeeklyScheduleRates, companies } = useStore();
+  const { addWeeklySchedule, updateWeeklySchedule, updateWeeklyScheduleRates, updateWeeklyScheduleNotes, companies } = useStore();
 
   const [weekDates, setWeekDates] = useState(getCurrentWeekDates());
   const [entries, setEntries] = useState<WeeklyMealEntry[]>(
     DAYS.map(day => ({ day, tiffen: '', lunch: '', dinner: '' }))
   );
   const [rates, setRates] = useState({ tiffen: 0, lunch: 0, dinner: 0 });
+  const [notes, setNotes] = useState({ tiffen: '', lunch: '', dinner: '' });
   const [currentScheduleId, setCurrentScheduleId] = useState<string | null>(null);
 
   const company = companies.find(c => c.id === companyId);
@@ -67,6 +68,7 @@ export function WeeklyScheduleDialog({ open, onClose, companyId, companyName }: 
       setWeekDates(getCurrentWeekDates());
       setEntries(DAYS.map(day => ({ day, tiffen: '', lunch: '', dinner: '' })));
       setRates({ tiffen: 0, lunch: 0, dinner: 0 });
+      setNotes({ tiffen: '', lunch: '', dinner: '' });
       setCurrentScheduleId(null);
     }
   }, [open]);
@@ -81,10 +83,15 @@ export function WeeklyScheduleDialog({ open, onClose, companyId, companyName }: 
     setRates(prev => ({ ...prev, [field]: parseFloat(value) || 0 }));
   };
 
+  const handleNotesChange = (field: 'tiffen' | 'lunch' | 'dinner', value: string) => {
+    setNotes(prev => ({ ...prev, [field]: value }));
+  };
+
   const handleSave = () => {
     if (currentScheduleId) {
       updateWeeklySchedule(currentScheduleId, entries);
       updateWeeklyScheduleRates(currentScheduleId, rates);
+      updateWeeklyScheduleNotes(currentScheduleId, notes);
     } else {
       const newSchedule: WeeklySchedule = {
         id: crypto.randomUUID(),
@@ -93,6 +100,7 @@ export function WeeklyScheduleDialog({ open, onClose, companyId, companyName }: 
         weekEndDate: weekDates.end,
         entries,
         rates,
+        notes,
         createdAt: new Date().toISOString()
       };
       addWeeklySchedule(newSchedule);
@@ -111,6 +119,7 @@ export function WeeklyScheduleDialog({ open, onClose, companyId, companyName }: 
       weekEndDate: weekDates.end,
       entries,
       rates,
+      notes,
       createdAt: new Date().toISOString()
     };
 
@@ -149,39 +158,78 @@ export function WeeklyScheduleDialog({ open, onClose, companyId, companyName }: 
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Rates Configuration */}
+          {/* Rates and Notes Configuration */}
           <Card className="p-4 bg-gradient-to-br from-orange-50 to-amber-50">
-            <h3 className="font-semibold mb-3 text-slate-800">Meal Rates</h3>
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <label className="text-sm font-medium text-slate-700">Tiffen Rate</label>
-                <input
-                  type="number"
-                  value={rates.tiffen}
-                  onChange={(e) => handleRateChange('tiffen', e.target.value)}
-                  className="w-full mt-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500"
-                  placeholder="0.00"
-                />
+            <h3 className="font-semibold mb-3 text-slate-800">Meal Rates & Notes</h3>
+            <div className="space-y-4">
+              {/* Tiffen Row */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-slate-700">Tiffen Rate</label>
+                  <input
+                    type="number"
+                    value={rates.tiffen}
+                    onChange={(e) => handleRateChange('tiffen', e.target.value)}
+                    className="w-full mt-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500"
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-slate-700">Tiffen Notes</label>
+                  <input
+                    type="text"
+                    value={notes.tiffen}
+                    onChange={(e) => handleNotesChange('tiffen', e.target.value)}
+                    className="w-full mt-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500"
+                    placeholder="Enter notes..."
+                  />
+                </div>
               </div>
-              <div>
-                <label className="text-sm font-medium text-slate-700">Lunch Rate</label>
-                <input
-                  type="number"
-                  value={rates.lunch}
-                  onChange={(e) => handleRateChange('lunch', e.target.value)}
-                  className="w-full mt-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500"
-                  placeholder="0.00"
-                />
+              {/* Lunch Row */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-slate-700">Lunch Rate</label>
+                  <input
+                    type="number"
+                    value={rates.lunch}
+                    onChange={(e) => handleRateChange('lunch', e.target.value)}
+                    className="w-full mt-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500"
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-slate-700">Lunch Notes</label>
+                  <input
+                    type="text"
+                    value={notes.lunch}
+                    onChange={(e) => handleNotesChange('lunch', e.target.value)}
+                    className="w-full mt-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500"
+                    placeholder="Enter notes..."
+                  />
+                </div>
               </div>
-              <div>
-                <label className="text-sm font-medium text-slate-700">Dinner Rate</label>
-                <input
-                  type="number"
-                  value={rates.dinner}
-                  onChange={(e) => handleRateChange('dinner', e.target.value)}
-                  className="w-full mt-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500"
-                  placeholder="0.00"
-                />
+              {/* Dinner Row */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-slate-700">Dinner Rate</label>
+                  <input
+                    type="number"
+                    value={rates.dinner}
+                    onChange={(e) => handleRateChange('dinner', e.target.value)}
+                    className="w-full mt-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500"
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-slate-700">Dinner Notes</label>
+                  <input
+                    type="text"
+                    value={notes.dinner}
+                    onChange={(e) => handleNotesChange('dinner', e.target.value)}
+                    className="w-full mt-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500"
+                    placeholder="Enter notes..."
+                  />
+                </div>
               </div>
             </div>
           </Card>
