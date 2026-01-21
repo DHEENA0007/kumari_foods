@@ -62,8 +62,10 @@ const generateFromElement = async (element: HTMLElement, fileName: string) => {
   try {
     const clone = element.cloneNode(true) as HTMLElement;
     clone.style.padding = '20px';
-    clone.style.background = 'white';
+    clone.style.background = '#ffffff';
+    clone.style.backgroundColor = '#ffffff';
     clone.style.width = '800px';
+    clone.style.color = '#000000';
 
     // Clean up clone: remove buttons and replace inputs
     const buttons = clone.querySelectorAll('button');
@@ -75,6 +77,7 @@ const generateFromElement = async (element: HTMLElement, fileName: string) => {
       span.textContent = (input as HTMLInputElement).value || '-';
       span.style.display = 'block';
       span.style.textAlign = 'center';
+      span.style.color = '#000000';
       span.className = 'noto-sans-tamil';
       input.parentNode?.replaceChild(span, input);
     });
@@ -84,6 +87,7 @@ const generateFromElement = async (element: HTMLElement, fileName: string) => {
     header.style.marginBottom = '10px';
     header.style.padding = '10px';
     header.style.position = 'relative';
+    header.style.backgroundColor = '#ffffff';
     header.innerHTML = `
       <div style="position: absolute; top: 10px; right: 10px; font-weight: bold; font-size: 14px; color: #0064C8;">Phone: 9677012455</div>
       <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;">
@@ -98,7 +102,8 @@ const generateFromElement = async (element: HTMLElement, fileName: string) => {
     footer.style.textAlign = 'center';
     footer.style.marginTop = '20px';
     footer.style.padding = '10px';
-    footer.style.paddingBottom = '30px'; // Extra padding to prevent cutoff
+    footer.style.paddingBottom = '30px';
+    footer.style.backgroundColor = '#ffffff';
     footer.innerHTML = `
       <div style="font-size: 12px; color: #000000; margin-bottom: 8px;" class="noto-sans-tamil">அனைத்து விசேஷங்களுக்கும், உங்கள் ஆர்டரின் பெயரில், அனைத்து விதமான உணவுகளும் செய்து தரப்படும்.</div>
       <div style="font-size: 12px; color: #000000;">No: 28/19, Kalavanar Nagar, Thirupathi Kudai Salai, Ambattur, Chennai-600 058</div>
@@ -111,12 +116,14 @@ const generateFromElement = async (element: HTMLElement, fileName: string) => {
       table.style.borderCollapse = 'collapse';
       table.style.width = '100%';
       table.style.border = '2px solid #000000';
+      table.style.backgroundColor = '#ffffff';
 
       const cells = clone.querySelectorAll('th, td');
       cells.forEach(cell => {
         (cell as HTMLElement).style.border = '1px solid #000000';
         (cell as HTMLElement).style.padding = '8px';
         (cell as HTMLElement).style.color = '#000000';
+        (cell as HTMLElement).style.backgroundColor = '#ffffff';
       });
 
       const headers = clone.querySelectorAll('th');
@@ -125,7 +132,23 @@ const generateFromElement = async (element: HTMLElement, fileName: string) => {
       });
     }
 
-    // Fix oklch error by overriding CSS variables with hex values in the clone
+    // Fix all elements with explicit colors to avoid oklch
+    const allElements = clone.querySelectorAll('*');
+    allElements.forEach(el => {
+      const htmlEl = el as HTMLElement;
+      // Force safe colors on all elements
+      htmlEl.style.setProperty('--background', '#ffffff', 'important');
+      htmlEl.style.setProperty('--foreground', '#1e293b', 'important');
+      htmlEl.style.setProperty('--card', '#ffffff', 'important');
+      htmlEl.style.setProperty('--card-foreground', '#1e293b', 'important');
+      htmlEl.style.setProperty('--primary', '#ef4444', 'important');
+      htmlEl.style.setProperty('--secondary', '#f1f5f9', 'important');
+      htmlEl.style.setProperty('--muted', '#f1f5f9', 'important');
+      htmlEl.style.setProperty('--accent', '#f1f5f9', 'important');
+      htmlEl.style.setProperty('--border', '#e2e8f0', 'important');
+    });
+
+    // Add style override to force hex colors
     const styleOverride = document.createElement('style');
     styleOverride.textContent = `
       * {
@@ -150,52 +173,60 @@ const generateFromElement = async (element: HTMLElement, fileName: string) => {
         --ring: #94a3b8 !important;
       }
       
-      /* Force standard colors on common elements */
-      .bg-background { background-color: #ffffff !important; }
-      .text-foreground { color: #1e293b !important; }
-      .border-border { border-color: #e2e8f0 !important; }
+      .bg-background, [class*="bg-"] { background-color: #ffffff !important; }
+      .text-foreground, [class*="text-"] { color: #000000 !important; }
+      .border-border, [class*="border-"] { border-color: #e2e8f0 !important; }
       .bg-card { background-color: #ffffff !important; }
-      .bg-primary { background-color: #ef4444 !important; }
-      .text-primary-foreground { color: #ffffff !important; }
+      .bg-gradient-to-br { background: #fef3e2 !important; }
       
-      body, html {
-        background-color: #ffffff !important;
-        color: #1e293b !important;
+      body, html, div, span, p, h1, h2, h3, h4, h5, h6, label {
+        background-color: transparent !important;
+        color: #000000 !important;
+      }
+      
+      [class*="from-orange"], [class*="from-green"], [class*="from-amber"] {
+        background: #fef3e2 !important;
       }
     `;
-    clone.appendChild(styleOverride);
-    clone.classList.add('clone-root');
+    clone.insertBefore(styleOverride, clone.firstChild);
 
     clone.style.position = 'absolute';
     clone.style.left = '-9999px';
     clone.style.top = '0';
     document.body.appendChild(clone);
 
+    // Wait for fonts and images
+    await document.fonts.ready;
     const images = Array.from(clone.querySelectorAll('img'));
     await Promise.all(images.map(img => {
       if (img.complete) return Promise.resolve();
       return new Promise(resolve => { img.onload = resolve; img.onerror = resolve; });
     }));
 
+    // Apply inline styles to all elements before canvas generation
+    const elementsToFix = clone.getElementsByTagName('*');
+    for (let i = 0; i < elementsToFix.length; i++) {
+      const el = elementsToFix[i] as HTMLElement;
+      const computed = window.getComputedStyle(el);
+      
+      // Check each color property and replace oklch
+      const bgColor = computed.backgroundColor;
+      const textColor = computed.color;
+      const borderColor = computed.borderColor;
+      
+      if (bgColor.includes('oklch')) el.style.backgroundColor = '#ffffff';
+      if (textColor.includes('oklch')) el.style.color = '#000000';
+      if (borderColor.includes('oklch')) el.style.borderColor = '#e2e8f0';
+    }
+
     const canvas = await html2canvas(clone, {
       scale: 2,
       useCORS: true,
       logging: false,
       backgroundColor: '#ffffff',
-      onclone: (clonedDoc) => {
-        const allElements = clonedDoc.getElementsByTagName('*');
-        for (let i = 0; i < allElements.length; i++) {
-          const el = allElements[i] as HTMLElement;
-          const style = window.getComputedStyle(el);
-
-          if (style.backgroundColor.includes('oklch')) el.style.backgroundColor = '#ffffff';
-          if (style.color.includes('oklch')) el.style.color = '#1e293b';
-          if (style.borderColor.includes('oklch')) el.style.borderColor = '#e2e8f0';
-          if (style.outlineColor.includes('oklch')) el.style.outlineColor = 'transparent';
-          if (style.boxShadow.includes('oklch')) el.style.boxShadow = 'none';
-          if (style.fill.includes('oklch')) el.style.fill = 'currentColor';
-          if (style.stroke.includes('oklch')) el.style.stroke = 'currentColor';
-        }
+      ignoreElements: (element) => {
+        // Ignore any SVG elements that might have oklch colors
+        return element.tagName === 'svg';
       }
     });
     document.body.removeChild(clone);
