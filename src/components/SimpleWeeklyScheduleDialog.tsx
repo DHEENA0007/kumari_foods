@@ -60,12 +60,14 @@ const getCurrentWeekDates = (): { start: string; end: string } => {
 };
 
 export function SimpleWeeklyScheduleDialog({ open, onClose }: SimpleWeeklyScheduleDialogProps) {
-  const { addWeeklySchedule, updateWeeklySchedule } = useStore();
+  const { addWeeklySchedule, updateWeeklySchedule, updateWeeklyScheduleRates, updateWeeklyScheduleNotes } = useStore();
 
   const [weekDates, setWeekDates] = useState(getCurrentWeekDates());
   const [entries, setEntries] = useState<WeeklyMealEntry[]>(
     DAYS.map(day => ({ day, tiffen: '', lunch: '', dinner: '' }))
   );
+  const [rates, setRates] = useState({ tiffen: 0, lunch: 0, dinner: 0 });
+  const [notes, setNotes] = useState({ tiffen: '', lunch: '', dinner: '' });
   const [currentScheduleId, setCurrentScheduleId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -78,6 +80,8 @@ export function SimpleWeeklyScheduleDialog({ open, onClose }: SimpleWeeklySchedu
         lunch: DEFAULT_SCHEDULE[day].lunch,
         dinner: DEFAULT_SCHEDULE[day].dinner
       })));
+      setRates({ tiffen: 0, lunch: 0, dinner: 0 });
+      setNotes({ tiffen: '', lunch: '', dinner: '' });
       setCurrentScheduleId(null);
     }
   }, [open]);
@@ -88,10 +92,20 @@ export function SimpleWeeklyScheduleDialog({ open, onClose }: SimpleWeeklySchedu
     ));
   };
 
+  const handleRateChange = (field: 'tiffen' | 'lunch' | 'dinner', value: string) => {
+    setRates(prev => ({ ...prev, [field]: parseFloat(value) || 0 }));
+  };
+
+  const handleNotesChange = (field: 'tiffen' | 'lunch' | 'dinner', value: string) => {
+    setNotes(prev => ({ ...prev, [field]: value }));
+  };
+
   const handleSave = async () => {
     try {
       if (currentScheduleId) {
         await updateWeeklySchedule(currentScheduleId, entries);
+        await updateWeeklyScheduleRates(currentScheduleId, rates);
+        await updateWeeklyScheduleNotes(currentScheduleId, notes);
       } else {
         const newSchedule: WeeklySchedule = {
           id: crypto.randomUUID(),
@@ -99,7 +113,8 @@ export function SimpleWeeklyScheduleDialog({ open, onClose }: SimpleWeeklySchedu
           weekStartDate: weekDates.start,
           weekEndDate: weekDates.end,
           entries,
-          rates: { tiffen: 0, lunch: 0, dinner: 0 }, // No rates needed
+          rates,
+          notes,
           createdAt: new Date().toISOString()
         };
         await addWeeklySchedule(newSchedule);
@@ -209,6 +224,82 @@ export function SimpleWeeklyScheduleDialog({ open, onClose }: SimpleWeeklySchedu
                   })}
                 </tbody>
               </table>
+            </div>
+          </Card>
+
+          {/* Rates and Notes Configuration */}
+          <Card className="p-4 bg-gradient-to-br from-orange-50 to-amber-50">
+            <h3 className="font-semibold mb-3 text-slate-800">Meal Rates & Notes</h3>
+            <div className="space-y-4">
+              {/* Tiffen Row */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-slate-700">Tiffen Rate</label>
+                  <input
+                    type="number"
+                    value={rates.tiffen}
+                    onChange={(e) => handleRateChange('tiffen', e.target.value)}
+                    className="w-full mt-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500"
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-slate-700">Tiffen Notes</label>
+                  <input
+                    type="text"
+                    value={notes.tiffen}
+                    onChange={(e) => handleNotesChange('tiffen', e.target.value)}
+                    className="w-full mt-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500"
+                    placeholder="Enter notes..."
+                  />
+                </div>
+              </div>
+              {/* Lunch Row */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-slate-700">Lunch Rate</label>
+                  <input
+                    type="number"
+                    value={rates.lunch}
+                    onChange={(e) => handleRateChange('lunch', e.target.value)}
+                    className="w-full mt-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500"
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-slate-700">Lunch Notes</label>
+                  <input
+                    type="text"
+                    value={notes.lunch}
+                    onChange={(e) => handleNotesChange('lunch', e.target.value)}
+                    className="w-full mt-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500"
+                    placeholder="Enter notes..."
+                  />
+                </div>
+              </div>
+              {/* Dinner Row */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-slate-700">Dinner Rate</label>
+                  <input
+                    type="number"
+                    value={rates.dinner}
+                    onChange={(e) => handleRateChange('dinner', e.target.value)}
+                    className="w-full mt-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500"
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-slate-700">Dinner Notes</label>
+                  <input
+                    type="text"
+                    value={notes.dinner}
+                    onChange={(e) => handleNotesChange('dinner', e.target.value)}
+                    className="w-full mt-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500"
+                    placeholder="Enter notes..."
+                  />
+                </div>
+              </div>
             </div>
           </Card>
 
