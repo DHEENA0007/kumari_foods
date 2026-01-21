@@ -181,23 +181,6 @@ export const useStore = create<AppState>((set, get) => ({
     }
   },
 
-  updateWeeklyScheduleNotes: async (scheduleId, notes) => {
-    set((state) => ({
-      weeklySchedules: state.weeklySchedules.map(s =>
-        s.id === scheduleId ? { ...s, notes } : s
-      )
-    }));
-    try {
-      const state = get();
-      const schedule = state.weeklySchedules.find(s => s.id === scheduleId);
-      if (schedule) {
-        await firebaseService.updateWeeklySchedule(schedule);
-      }
-    } catch (error) {
-      console.error('Failed to update weekly schedule notes in Firebase:', error);
-    }
-  },
-
   deleteWeeklySchedule: async (scheduleId) => {
     set((state) => ({
       weeklySchedules: state.weeklySchedules.filter(s => s.id !== scheduleId)

@@ -100,6 +100,7 @@ const generateFromElement = async (element: HTMLElement, fileName: string) => {
     footer.style.padding = '10px';
     footer.style.paddingBottom = '30px'; // Extra padding to prevent cutoff
     footer.innerHTML = `
+      <div style="font-size: 12px; color: #000000; margin-bottom: 8px;" class="noto-sans-tamil">அனைத்து விசேஷங்களுக்கும், உங்கள் ஆர்டரின் பெயரில், அனைத்து விதமான உணவுகளும் செய்து தரப்படும்.</div>
       <div style="font-size: 12px; color: #000000;">No: 28/19, Kalavanar Nagar, Thirupathi Kudai Salai, Ambattur, Chennai-600 058</div>
     `;
     clone.appendChild(footer);
