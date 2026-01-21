@@ -166,95 +166,98 @@ export function SimpleWeeklyScheduleDialog({ open, onClose }: SimpleWeeklySchedu
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Weekly Schedule Table */}
-          <Card id="weekly-schedule-table" className="overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-slate-100 border-b">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Day</th>
-                    <th className="px-4 py-3 text-center text-sm font-semibold text-slate-700">Tiffen</th>
-                    <th className="px-4 py-3 text-center text-sm font-semibold text-slate-700">Lunch</th>
-                    <th className="px-4 py-3 text-center text-sm font-semibold text-slate-700">Dinner</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {DAYS.map((day, index) => {
-                    const entry = entries.find(e => e.day === day);
-                    return (
-                      <tr key={day} className={index % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
-                        <td className="px-4 py-3 text-sm font-medium text-slate-700">{DAY_LABELS[day]}</td>
-                        <td className="px-4 py-3">
-                          <input
-                            type="text"
-                            value={entry?.tiffen || ''}
-                            onChange={(e) => handleCellChange(day, 'tiffen', e.target.value)}
-                            className="w-full px-2 py-1 text-center border rounded focus:ring-2 focus:ring-orange-500 noto-sans-tamil"
-                            placeholder="-"
-                          />
-                        </td>
-                        <td className="px-4 py-3">
-                          <input
-                            type="text"
-                            value={entry?.lunch || ''}
-                            onChange={(e) => handleCellChange(day, 'lunch', e.target.value)}
-                            className="w-full px-2 py-1 text-center border rounded focus:ring-2 focus:ring-orange-500 noto-sans-tamil"
-                            placeholder="-"
-                          />
-                        </td>
-                        <td className="px-4 py-3">
-                          <input
-                            type="text"
-                            value={entry?.dinner || ''}
-                            onChange={(e) => handleCellChange(day, 'dinner', e.target.value)}
-                            className="w-full px-2 py-1 text-center border rounded focus:ring-2 focus:ring-orange-500 noto-sans-tamil"
-                            placeholder="-"
-                          />
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </Card>
+          {/* PDF Content Container */}
+          <div id="weekly-schedule-table" className="space-y-4">
+            {/* Weekly Schedule Table */}
+            <Card className="overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-slate-100 border-b">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Day</th>
+                      <th className="px-4 py-3 text-center text-sm font-semibold text-slate-700">Tiffen</th>
+                      <th className="px-4 py-3 text-center text-sm font-semibold text-slate-700">Lunch</th>
+                      <th className="px-4 py-3 text-center text-sm font-semibold text-slate-700">Dinner</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {DAYS.map((day, index) => {
+                      const entry = entries.find(e => e.day === day);
+                      return (
+                        <tr key={day} className={index % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
+                          <td className="px-4 py-3 text-sm font-medium text-slate-700">{DAY_LABELS[day]}</td>
+                          <td className="px-4 py-3">
+                            <input
+                              type="text"
+                              value={entry?.tiffen || ''}
+                              onChange={(e) => handleCellChange(day, 'tiffen', e.target.value)}
+                              className="w-full px-2 py-1 text-center border rounded focus:ring-2 focus:ring-orange-500 noto-sans-tamil"
+                              placeholder="-"
+                            />
+                          </td>
+                          <td className="px-4 py-3">
+                            <input
+                              type="text"
+                              value={entry?.lunch || ''}
+                              onChange={(e) => handleCellChange(day, 'lunch', e.target.value)}
+                              className="w-full px-2 py-1 text-center border rounded focus:ring-2 focus:ring-orange-500 noto-sans-tamil"
+                              placeholder="-"
+                            />
+                          </td>
+                          <td className="px-4 py-3">
+                            <input
+                              type="text"
+                              value={entry?.dinner || ''}
+                              onChange={(e) => handleCellChange(day, 'dinner', e.target.value)}
+                              className="w-full px-2 py-1 text-center border rounded focus:ring-2 focus:ring-orange-500 noto-sans-tamil"
+                              placeholder="-"
+                            />
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
 
-          {/* Rates Configuration */}
-          <Card className="p-4 bg-gradient-to-br from-orange-50 to-amber-50">
-            <h3 className="font-semibold mb-3 text-slate-800">Meal Rates</h3>
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <label className="text-sm font-medium text-slate-700">Tiffen Rate</label>
-                <input
-                  type="number"
-                  value={rates.tiffen}
-                  onChange={(e) => handleRateChange('tiffen', e.target.value)}
-                  className="w-full mt-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500"
-                  placeholder="0.00"
-                />
+            {/* Rates Configuration */}
+            <Card className="p-4 bg-gradient-to-br from-orange-50 to-amber-50">
+              <h3 className="font-semibold mb-3 text-slate-800">Meal Rates</h3>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-slate-700">Tiffen Rate</label>
+                  <input
+                    type="number"
+                    value={rates.tiffen}
+                    onChange={(e) => handleRateChange('tiffen', e.target.value)}
+                    className="w-full mt-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500"
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-slate-700">Lunch Rate</label>
+                  <input
+                    type="number"
+                    value={rates.lunch}
+                    onChange={(e) => handleRateChange('lunch', e.target.value)}
+                    className="w-full mt-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500"
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-slate-700">Dinner Rate</label>
+                  <input
+                    type="number"
+                    value={rates.dinner}
+                    onChange={(e) => handleRateChange('dinner', e.target.value)}
+                    className="w-full mt-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500"
+                    placeholder="0.00"
+                  />
+                </div>
               </div>
-              <div>
-                <label className="text-sm font-medium text-slate-700">Lunch Rate</label>
-                <input
-                  type="number"
-                  value={rates.lunch}
-                  onChange={(e) => handleRateChange('lunch', e.target.value)}
-                  className="w-full mt-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500"
-                  placeholder="0.00"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-slate-700">Dinner Rate</label>
-                <input
-                  type="number"
-                  value={rates.dinner}
-                  onChange={(e) => handleRateChange('dinner', e.target.value)}
-                  className="w-full mt-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500"
-                  placeholder="0.00"
-                />
-              </div>
-            </div>
-          </Card>
+            </Card>
+          </div>
 
           {/* Summary */}
           <Card className="p-4 bg-gradient-to-br from-green-50 to-blue-50">
