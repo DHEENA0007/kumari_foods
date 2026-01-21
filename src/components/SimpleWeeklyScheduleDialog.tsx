@@ -60,7 +60,7 @@ const getCurrentWeekDates = (): { start: string; end: string } => {
 };
 
 export function SimpleWeeklyScheduleDialog({ open, onClose }: SimpleWeeklyScheduleDialogProps) {
-  const { addWeeklySchedule, updateWeeklySchedule, updateWeeklyScheduleRates } = useStore();
+  const { addWeeklySchedule, updateWeeklySchedule, updateWeeklyScheduleRates, weeklySchedules } = useStore();
 
   const [weekDates, setWeekDates] = useState(getCurrentWeekDates());
   const [entries, setEntries] = useState<WeeklyMealEntry[]>(
@@ -71,18 +71,34 @@ export function SimpleWeeklyScheduleDialog({ open, onClose }: SimpleWeeklySchedu
 
   useEffect(() => {
     if (open) {
-      setWeekDates(getCurrentWeekDates());
-      // Load default schedule on first open
-      setEntries(DAYS.map(day => ({
-        day,
-        tiffen: DEFAULT_SCHEDULE[day].tiffen,
-        lunch: DEFAULT_SCHEDULE[day].lunch,
-        dinner: DEFAULT_SCHEDULE[day].dinner
-      })));
-      setRates({ tiffen: 0, lunch: 0, dinner: 0 });
-      setCurrentScheduleId(null);
+      const dates = getCurrentWeekDates();
+      setWeekDates(dates);
+      
+      // Try to find existing saved schedule for "general" (header schedule)
+      const existingSchedule = weeklySchedules.find(s => s.companyId === 'general');
+      
+      if (existingSchedule) {
+        // Load saved schedule
+        setEntries(existingSchedule.entries);
+        setRates({
+          tiffen: existingSchedule.rates?.tiffen ?? 0,
+          lunch: existingSchedule.rates?.lunch ?? 0,
+          dinner: existingSchedule.rates?.dinner ?? 0
+        });
+        setCurrentScheduleId(existingSchedule.id);
+      } else {
+        // Load default schedule on first use
+        setEntries(DAYS.map(day => ({
+          day,
+          tiffen: DEFAULT_SCHEDULE[day].tiffen,
+          lunch: DEFAULT_SCHEDULE[day].lunch,
+          dinner: DEFAULT_SCHEDULE[day].dinner
+        })));
+        setRates({ tiffen: 0, lunch: 0, dinner: 0 });
+        setCurrentScheduleId(null);
+      }
     }
-  }, [open]);
+  }, [open, weeklySchedules]);
 
   const handleCellChange = (day: DayOfWeek, field: 'tiffen' | 'lunch' | 'dinner', value: string) => {
     setEntries(prev => prev.map(entry =>
@@ -168,6 +184,43 @@ export function SimpleWeeklyScheduleDialog({ open, onClose }: SimpleWeeklySchedu
         <div className="space-y-4">
           {/* PDF Content Container */}
           <div id="weekly-schedule-table" className="space-y-4">
+            {/* Rates Configuration - Moved to Top */}
+            <Card className="p-4 bg-gradient-to-br from-orange-50 to-amber-50">
+              <h3 className="font-semibold mb-3 text-slate-800 noto-sans-tamil">உணவு விலை பட்டியல்</h3>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-slate-700 noto-sans-tamil">காலை விலை</label>
+                  <input
+                    type="number"
+                    value={rates.tiffen}
+                    onChange={(e) => handleRateChange('tiffen', e.target.value)}
+                    className="w-full mt-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500"
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-slate-700 noto-sans-tamil">மதிய விலை</label>
+                  <input
+                    type="number"
+                    value={rates.lunch}
+                    onChange={(e) => handleRateChange('lunch', e.target.value)}
+                    className="w-full mt-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500"
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-slate-700 noto-sans-tamil">இரவு விலை</label>
+                  <input
+                    type="number"
+                    value={rates.dinner}
+                    onChange={(e) => handleRateChange('dinner', e.target.value)}
+                    className="w-full mt-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500"
+                    placeholder="0.00"
+                  />
+                </div>
+              </div>
+            </Card>
+
             {/* Weekly Schedule Table */}
             <Card className="overflow-hidden">
               <div className="overflow-x-auto">
@@ -218,43 +271,6 @@ export function SimpleWeeklyScheduleDialog({ open, onClose }: SimpleWeeklySchedu
                     })}
                   </tbody>
                 </table>
-              </div>
-            </Card>
-
-            {/* Rates Configuration */}
-            <Card className="p-4 bg-gradient-to-br from-orange-50 to-amber-50">
-              <h3 className="font-semibold mb-3 text-slate-800 noto-sans-tamil">உணவு கட்டணங்கள்</h3>
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-slate-700 noto-sans-tamil">காலை கட்டணம்</label>
-                  <input
-                    type="number"
-                    value={rates.tiffen}
-                    onChange={(e) => handleRateChange('tiffen', e.target.value)}
-                    className="w-full mt-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500"
-                    placeholder="0.00"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-slate-700 noto-sans-tamil">மதிய கட்டணம்</label>
-                  <input
-                    type="number"
-                    value={rates.lunch}
-                    onChange={(e) => handleRateChange('lunch', e.target.value)}
-                    className="w-full mt-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500"
-                    placeholder="0.00"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-slate-700 noto-sans-tamil">இரவு கட்டணம்</label>
-                  <input
-                    type="number"
-                    value={rates.dinner}
-                    onChange={(e) => handleRateChange('dinner', e.target.value)}
-                    className="w-full mt-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500"
-                    placeholder="0.00"
-                  />
-                </div>
               </div>
             </Card>
           </div>
