@@ -189,7 +189,7 @@ export function SimpleWeeklyScheduleDialog({ open, onClose }: SimpleWeeklySchedu
               <h3 className="font-semibold mb-3 text-slate-800 noto-sans-tamil">உணவு விலை பட்டியல்</h3>
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-slate-700 noto-sans-tamil">காலை விலை</label>
+                  <label className="text-sm font-medium text-slate-700 noto-sans-tamil">காலை உணவு விலை</label>
                   <input
                     type="number"
                     value={rates.tiffen}
@@ -199,7 +199,7 @@ export function SimpleWeeklyScheduleDialog({ open, onClose }: SimpleWeeklySchedu
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-slate-700 noto-sans-tamil">மதிய விலை</label>
+                  <label className="text-sm font-medium text-slate-700 noto-sans-tamil">மதிய உணவு விலை</label>
                   <input
                     type="number"
                     value={rates.lunch}
@@ -209,7 +209,7 @@ export function SimpleWeeklyScheduleDialog({ open, onClose }: SimpleWeeklySchedu
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-slate-700 noto-sans-tamil">இரவு விலை</label>
+                  <label className="text-sm font-medium text-slate-700 noto-sans-tamil">இரவு உணவு விலை</label>
                   <input
                     type="number"
                     value={rates.dinner}
