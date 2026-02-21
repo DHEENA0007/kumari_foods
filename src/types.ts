@@ -27,6 +27,9 @@ export interface DateBasedMealEntry {
   tiffen?: number | string;
   lunch?: number | string;
   dinner?: number | string;
+  tiffenRate?: number | string;
+  lunchRate?: number | string;
+  dinnerRate?: number | string;
 }
 
 export interface MealSchedule {
