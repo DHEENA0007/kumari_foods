@@ -270,113 +270,118 @@ export function MealScheduleTable({ companyId, month }: MealScheduleTableProps) 
   return (
     <div className="space-y-3 sm:space-y-4">
       {/* Rates Configuration Card */}
-      <Card className="p-3 sm:p-4 bg-gradient-to-br from-brand-orange/5 to-brand-amber/5 border-brand-orange/20">
-        <h3 className="text-sm font-semibold text-text-primary mb-3 flex items-center gap-2">
-          <span className="w-1 h-4 bg-brand-orange rounded-full"></span>
-          Meal Rates (₹)
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200/80 overflow-hidden mb-6">
+        <div className="px-4 py-3 sm:px-5 sm:py-4 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-brand-orange shadow-sm"></div>
+            Base Meal Rates (₹)
+          </h3>
+          <p className="text-[11px] sm:text-xs text-slate-500 font-medium">Applied automatically to all daily entries</p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-slate-100">
           {['tiffen', 'lunch', 'dinner'].map((mealType) => (
-            <div key={mealType} className="bg-white rounded-md p-2 border border-border-light">
-              <label className="text-xs font-medium text-text-secondary block mb-1 capitalize">
+            <div key={mealType} className="p-4 sm:p-5 hover:bg-slate-50/50 transition-colors">
+              <label className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-widest block mb-2">
                 {mealType}
               </label>
-              <input
-                type="number"
-                value={editingRate === mealType ? tempRate : schedule?.rates?.[mealType as 'tiffen' | 'lunch' | 'dinner'] || ''}
-                onChange={(e) => setTempRate(e.target.value)}
-                onFocus={() => handleRateClick(mealType as 'tiffen' | 'lunch' | 'dinner')}
-                onBlur={() => handleRateBlur(mealType as 'tiffen' | 'lunch' | 'dinner')}
-                placeholder="0"
-                className="w-full text-base font-semibold text-text-primary p-1.5 border border-border-light rounded focus:outline-none focus:border-brand-orange transition-colors"
-              />
+              <div className="relative group">
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-medium group-focus-within:text-brand-orange transition-colors">₹</span>
+                <input
+                  type="number"
+                  value={editingRate === mealType ? tempRate : schedule?.rates?.[mealType as 'tiffen' | 'lunch' | 'dinner'] || ''}
+                  onChange={(e) => setTempRate(e.target.value)}
+                  onFocus={() => handleRateClick(mealType as 'tiffen' | 'lunch' | 'dinner')}
+                  onBlur={() => handleRateBlur(mealType as 'tiffen' | 'lunch' | 'dinner')}
+                  placeholder="0.00"
+                  className="w-full pl-8 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 font-semibold focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/20 focus:outline-none transition-all shadow-[0_1px_2px_rgba(0,0,0,0.02)] box-border"
+                />
+              </div>
             </div>
           ))}
         </div>
-      </Card>
-
-      {/* Daily Entries Header */}
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-text-primary flex items-center gap-2">
-          <span className="w-1 h-4 bg-brand-orange rounded-full"></span>
-          Daily Entries
-        </h3>
       </div>
 
-      {/* Entries Table */}
-      <Card className="overflow-hidden border-border-light shadow-lg">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+      {/* Daily Entries Header & Table */}
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200/80 overflow-hidden">
+        <div className="px-4 py-3 sm:px-5 sm:py-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+          <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-blue-500 shadow-sm"></div>
+            Daily Entries
+          </h3>
+        </div>
+
+        <div className="overflow-x-auto w-full">
+          <table className="w-full text-sm min-w-[350px]">
             <thead>
-              <tr className="bg-gradient-to-r from-slate-800 to-slate-700 text-white shadow-sm">
-                <th className="px-4 py-3 text-left font-bold text-sm">Date</th>
-                <th className="px-4 py-3 text-center font-bold text-sm">Tiffen</th>
-                <th className="px-4 py-3 text-center font-bold text-sm">Lunch</th>
-                <th className="px-4 py-3 text-center font-bold text-sm">Dinner</th>
+              <tr className="bg-slate-50 border-b border-slate-200 text-slate-600">
+                <th className="px-3 sm:px-5 py-3 text-left font-bold text-xs uppercase tracking-wider">Date</th>
+                <th className="px-2 sm:px-4 py-3 text-center font-bold text-xs uppercase tracking-wider">Tiffen</th>
+                <th className="px-2 sm:px-4 py-3 text-center font-bold text-xs uppercase tracking-wider">Lunch</th>
+                <th className="px-2 sm:px-4 py-3 text-center font-bold text-xs uppercase tracking-wider">Dinner</th>
               </tr>
             </thead>
-            <tbody>
-              {allDates.map((date, index) => (
+            <tbody className="divide-y divide-slate-100">
+              {allDates.map((date) => (
                 <tr
                   key={date}
-                  className={`border-b border-slate-200 transition-all duration-200 hover:bg-blue-50 hover:shadow-sm ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50'
-                    }`}
+                  className="bg-white hover:bg-slate-50/60 transition-colors"
                 >
-                  <td className="px-4 py-3">
+                  <td className="px-3 sm:px-5 py-3 sm:py-4 align-top w-[25%] sm:w-auto">
                     <div className="flex flex-col items-start gap-1">
-                      <div className="font-mono font-bold text-slate-800 text-sm bg-slate-100 px-2 py-1 rounded border border-slate-200 inline-block">
+                      <div className="font-mono font-bold text-slate-700 text-[10px] sm:text-xs bg-slate-100/80 px-2 py-1 rounded border border-slate-200/60">
                         {date}
                       </div>
-                      <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{getDayOfWeek(date)}</span>
+                      <span className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">{getDayOfWeek(date)}</span>
                     </div>
                   </td>
                   {['tiffen', 'lunch', 'dinner'].map((mealType) => (
-                    <td key={mealType} className="px-4 py-3 text-center align-top">
-                      <div className="flex flex-col items-center gap-1.5 min-w-[5rem]">
-                        <div className="flex items-center gap-1">
+                    <td key={mealType} className="px-1 sm:px-4 py-2 sm:py-3 text-center align-top">
+                      <div className="flex flex-col items-center gap-1.5 min-w-[3.5rem] sm:min-w-[5rem]">
+                        <div className="flex flex-col sm:flex-row items-center justify-center gap-1.5">
                           <input
                             type="text"
+                            inputMode="numeric"
                             value={isEditing(date, mealType) ? tempValue : getValue(date, mealType as 'tiffen' | 'lunch' | 'dinner')}
                             onChange={(e) => setTempValue(e.target.value)}
                             onFocus={() => handleCellClick(date, mealType as 'tiffen' | 'lunch' | 'dinner')}
                             onBlur={() => handleCellBlur(date, mealType as 'tiffen' | 'lunch' | 'dinner')}
                             placeholder="Qty"
-                            title="Count"
-                            className="w-14 text-center px-1 py-1.5 border border-slate-300 rounded bg-white text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-sm"
+                            className="w-12 sm:w-16 text-center px-1 py-1.5 border border-slate-200 rounded-md bg-white text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all shadow-[0_1px_2px_rgba(0,0,0,0.02)] text-xs sm:text-sm placeholder:font-normal placeholder:text-slate-300"
                           />
                           {(showRateInputs[`${date}-${mealType}`] || getRateValue(date, mealType as 'tiffen' | 'lunch' | 'dinner')) ? (
                             <button
                               type="button"
                               onClick={() => toggleRateInput(date, mealType)}
-                              className="text-red-500 hover:text-red-700 p-1 flex-shrink-0"
+                              className="text-white bg-rose-500 hover:bg-rose-600 p-1 rounded-md sm:rounded shadow-sm flex-shrink-0 transition-colors"
                               title="Remove Custom Rate"
                             >
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 sm:h-3.5 sm:w-3.5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
                             </button>
                           ) : (
                             <button
                               type="button"
                               onClick={() => toggleRateInput(date, mealType)}
-                              className="text-slate-400 hover:text-blue-600 bg-slate-50 hover:bg-blue-50 p-1 rounded border border-dashed border-slate-300 hover:border-blue-300 flex-shrink-0 transition-colors"
+                              className="text-slate-400 bg-slate-50 hover:text-blue-600 hover:bg-blue-50 p-1 rounded-md sm:rounded border border-dashed border-slate-200 hover:border-blue-300 shadow-sm flex-shrink-0 transition-all"
                               title="Add Custom Rate"
                             >
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" /></svg>
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 sm:h-3.5 sm:w-3.5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" /></svg>
                             </button>
                           )}
                         </div>
 
                         {(showRateInputs[`${date}-${mealType}`] || getRateValue(date, mealType as 'tiffen' | 'lunch' | 'dinner')) && (
-                          <div className="flex items-center gap-1 animate-in fade-in slide-in-from-top-1">
-                            <span className="text-xs text-slate-500 font-medium">₹</span>
+                          <div className="flex items-center gap-1 animate-in fade-in slide-in-from-top-1 bg-orange-50/50 p-1 rounded-md border border-brand-orange/20">
+                            <span className="text-[10px] text-brand-orange font-bold pl-0.5">₹</span>
                             <input
                               type="number"
+                              inputMode="decimal"
                               value={isRateEditing(date, mealType) ? tempRateValue : getRateValue(date, mealType as 'tiffen' | 'lunch' | 'dinner')}
                               onChange={(e) => setTempRateValue(e.target.value)}
                               onFocus={() => handleRateCellClick(date, mealType as 'tiffen' | 'lunch' | 'dinner')}
                               onBlur={() => handleRateCellBlur(date, mealType as 'tiffen' | 'lunch' | 'dinner')}
                               placeholder="Rate"
-                              title="Custom Rate"
-                              className="w-14 text-center px-1 py-1 border border-brand-orange/40 rounded bg-orange-50 text-slate-800 text-xs font-semibold focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange transition-all shadow-sm"
+                              className="w-10 sm:w-12 text-center px-0.5 py-0.5 border-none bg-transparent text-slate-800 text-[11px] sm:text-xs font-bold focus:outline-none focus:ring-0 placeholder:text-orange-200 placeholder:font-normal"
                             />
                           </div>
                         )}
@@ -388,7 +393,7 @@ export function MealScheduleTable({ companyId, month }: MealScheduleTableProps) 
             </tbody>
           </table>
         </div>
-      </Card>
+      </div>
 
       {/* Summary Card */}
       {allDates.length > 0 && (

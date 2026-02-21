@@ -78,7 +78,7 @@ function App() {
             </div>
 
             <div className="flex items-center gap-4">
-              <Button 
+              <Button
                 onClick={() => setWeeklyScheduleDialogOpen(true)}
                 className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-md flex items-center gap-2"
               >
@@ -94,9 +94,8 @@ function App() {
       {/* Main Content */}
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
-        <aside className={`fixed lg:static inset-y-0 left-0 z-40 w-80 bg-white/95 backdrop-blur-sm border-r border-slate-200/60 shadow-xl lg:shadow-none transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-        }`}>
+        <aside className={`fixed lg:static inset-y-0 left-0 z-40 w-80 bg-white/95 backdrop-blur-sm border-r border-slate-200/60 shadow-xl lg:shadow-none transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+          }`}>
           <div className="h-full overflow-hidden">
             <Sidebar
               onAddClick={handleAddCompany}
@@ -109,21 +108,23 @@ function App() {
         {/* Overlay for mobile */}
         {sidebarOpen && (
           <div
-            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-30 lg:hidden"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-30 lg:hidden transition-opacity"
             onClick={() => setSidebarOpen(false)}
           />
         )}
 
         {/* Main Area */}
-        <main className="flex-1 min-w-0 overflow-hidden">
-          <div className="h-full overflow-y-auto p-3 sm:p-6 lg:p-8">
-            <div className="max-w-7xl mx-auto">
-              <div className="mb-4 sm:mb-6">
-                <h2 className="text-lg sm:text-2xl font-bold text-slate-800 mb-2">Meal Schedule Dashboard</h2>
-                <p className="text-sm sm:text-base text-slate-600">Manage and track meal schedules for all companies</p>
+        <main className="flex-1 w-full min-w-0 overflow-y-auto bg-slate-50/50">
+          <div className="h-full p-2 sm:p-4 lg:p-6 lg:ml-6 flex flex-col items-center">
+            <div className="w-full max-w-6xl mx-auto space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mt-2 px-2">
+                <div>
+                  <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-800 tracking-tight">Dashboard</h2>
+                  <p className="text-xs sm:text-sm text-slate-500 mt-1">Manage schedules and overview</p>
+                </div>
               </div>
 
-              <div className="bg-white/60 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-sm border border-slate-200/60 p-3 sm:p-6">
+              <div className="bg-white rounded-xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-200/50 overflow-hidden w-full transition-all duration-300">
                 <WeeklySchedule />
               </div>
             </div>
